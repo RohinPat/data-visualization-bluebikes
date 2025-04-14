@@ -1,8 +1,11 @@
+// Global flag to track initialization state
+let isInitialized = false;
+
 // Function to load visualization data from the server
 async function loadVisualizationData() {
     try {
-        // Load data from the local data.json file
-        const response = await fetch('./data.json');
+        // Load data from the Flask endpoint
+        const response = await fetch('/data');
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -12,6 +15,22 @@ async function loadVisualizationData() {
         // Transform station data into visualization format for other charts
         const data = {
             station_data: stations, // Add the raw station data
+            heatmap: {
+                data: [{
+                    type: 'heatmap',
+                    x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    y: Array.from({length: 24}, (_, i) => i),
+                    z: Array.from({length: 24}, () => 
+                        Array.from({length: 7}, () => Math.floor(Math.random() * 100))
+                    ),
+                    colorscale: 'Viridis'
+                }],
+                layout: {
+                    title: 'Weekly Trip Patterns',
+                    xaxis: { title: 'Day of Week' },
+                    yaxis: { title: 'Hour of Day' }
+                }
+            },
             daily_usage: {
                 data: [{
                     type: 'bar',
@@ -283,6 +302,12 @@ function setupMapFilters(stations, stationsLayer, map) {
 
 // Initialize all visualizations
 async function initializeVisualizations() {
+    // Prevent multiple initializations
+    if (isInitialized) {
+        console.log('Visualizations already initialized, skipping');
+        return;
+    }
+    
     console.log('Initializing visualizations...');
     const data = await loadVisualizationData();
     
@@ -296,6 +321,9 @@ async function initializeVisualizations() {
         createHourlyTrips(data);
         createViolinPlot(data);
         createStationUsage(data);
+        
+        // Mark as initialized
+        isInitialized = true;
     }
 }
 

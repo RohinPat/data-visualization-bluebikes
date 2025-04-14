@@ -4,12 +4,12 @@ let isInitialized = false;
 // Function to load visualization data
 async function loadVisualizationData() {
     try {
-        // Load the data from the static files
+        // Load the data from the static files using relative paths
         const [stationsData, durationsData, hourlyData, dailyData] = await Promise.all([
-            fetch('/static/stations.json').then(res => res.json()),
-            fetch('/static/durations.json').then(res => res.json()),
-            fetch('/static/hourly_usage.json').then(res => res.json()),
-            fetch('/static/daily_usage.json').then(res => res.json())
+            fetch('./static/stations.json').then(res => res.json()),
+            fetch('./static/durations.json').then(res => res.json()),
+            fetch('./static/hourly_usage.json').then(res => res.json()),
+            fetch('./static/daily_usage.json').then(res => res.json())
         ]);
 
         const visualizationData = {

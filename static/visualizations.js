@@ -2,7 +2,7 @@
 let isInitialized = false;
 
 // Function to load visualization data
-async function loadVisualizationData() {
+function loadVisualizationData() {
     try {
         // Use the data from data.js directly
         if (typeof visualizationData === 'undefined') {
@@ -223,7 +223,7 @@ function setupMapFilters(stations, stationsLayer, map) {
 }
 
 // Initialize all visualizations
-async function initializeVisualizations() {
+function initializeVisualizations() {
     // Prevent multiple initializations
     if (isInitialized) {
         console.log('Visualizations already initialized, skipping');
@@ -231,7 +231,7 @@ async function initializeVisualizations() {
     }
     
     console.log('Initializing visualizations...');
-    const data = await loadVisualizationData();
+    const data = loadVisualizationData();
     
     if (data) {
         // Create station map first

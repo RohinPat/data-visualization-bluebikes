@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueBikes Data Analysis - Boston Bike-sharing Patterns</title>
+    <script src="https://cdn.plot.ly/plotly-2.30.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.curve@0.1.0/leaflet.curve.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>BlueBikes Data Analysis: Understanding Boston's Bike-sharing Patterns</h1>
+    </header>
+
+    <main>
+        <section class="introduction">
+            <h2>Project Introduction</h2>
+            <p>This project analyzes Boston's BlueBikes bike-sharing system data to understand urban mobility patterns and user behavior. By examining trip data from January 2025, we aim to uncover insights about how different types of users utilize the system, identify popular routes and stations, and understand temporal patterns in bike usage.</p>
+            
+            <h3>About the Data</h3>
+            <p>The dataset comes from BlueBikes' publicly available system data, containing detailed records of bike trips. Each trip record includes information such as start/end times and locations, user type, and trip duration. The data has been analyzed to reveal patterns in station usage, temporal trends, and user behavior across different areas of Boston and Cambridge.</p>
+            
+            <h3>References</h3>
+            <ul>
+                <li><a href="https://www.bluebikes.com/system-data">BlueBikes System Data</a> - Official source of trip data</li>
+                <li><a href="https://www.boston.gov/departments/boston-bikes/bike-data">Boston Bikes Data</a> - City of Boston's bicycle infrastructure data</li>
+            </ul>
+        </section>
+
+        <section class="spatial-analysis">
+            <h2>Spatial Distribution and Station Analysis</h2>
+            <p>The map and charts below show how BlueBikes stations are used across different university areas in Boston and Cambridge.</p>
+            
+            <div class="visualization-container">
+                <div class="controls">
+                    <h4>Filter by University Area</h4>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="universityArea" value="mit"> MIT</label>
+                        <label><input type="checkbox" name="universityArea" value="harvard"> Harvard</label>
+                        <label><input type="checkbox" name="universityArea" value="bu"> Boston University</label>
+                        <label><input type="checkbox" name="universityArea" value="neu"> Northeastern</label>
+                        <label><input type="checkbox" name="universityArea" value="none"> Other Stations</label>
+                    </div>
+                    <h4>Minimum Trip Volume</h4>
+                    <input type="range" id="tripVolume" min="0" max="214" value="0" step="10">
+                    <span id="tripVolumeValue">0</span> trips
+                </div>
+                <div id="station-map" style="height: 500px;"></div>
+                <div class="visualization-description">
+                    <h3>Station Distribution and University Impact</h3>
+                    <p>The map reveals a clear concentration of high-volume stations (larger circles) around university areas, particularly MIT and Harvard. These stations consistently show 2-3 times more activity than stations in non-university areas. MIT's stations along Mass Ave and Vassar Street are among the busiest in the system, highlighting the success of university partnerships and student discount programs.</p>
+                </div>
+            </div>
+
+            <div class="visualization-container">
+                <h3>Station Usage Analysis</h3>
+                <div class="chart-controls">
+                    <select id="stationView">
+                        <option value="combined">Combined Trips</option>
+                        <option value="starts">Starting Trips</option>
+                        <option value="ends">Ending Trips</option>
+                    </select>
+                    <select id="universityFilter">
+                        <option value="all">All Areas</option>
+                        <option value="mit">MIT Area</option>
+                        <option value="harvard">Harvard Area</option>
+                        <option value="bu">BU Area</option>
+                        <option value="neu">Northeastern Area</option>
+                    </select>
+                </div>
+                <div id="station-usage-chart"></div>
+                <div class="visualization-description">
+                    <h3>Top Stations Analysis</h3>
+                    <p>The station ranking analysis reinforces the critical role of university partnerships. MIT-affiliated stations dominate the top spots, with MIT's Mass Ave/Amherst St station leading by a significant margin. The high volume at these stations (200+ daily trips) correlates with student discount programs and proximity to classes. Harvard Square and Central Square stations also show strong performance, demonstrating how university stations serve as crucial links between campuses and public transit.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="temporal-patterns">
+            <h2>Temporal Usage Patterns</h2>
+            <p>These visualizations reveal when people use BlueBikes throughout the day and week.</p>
+            
+            <div class="visualization-container">
+                <div id="duration-violin" class="visualization"></div>
+                <div class="visualization-description">
+                    <h3>Trip Duration Patterns by User Type</h3>
+                    <p>The violin plot reveals distinct usage patterns between members and casual riders. Members, primarily commuters and students, show consistent, shorter trips (15-20 minutes) during morning and evening rush hours, suggesting regular commuting routes. In contrast, casual riders show longer, more variable durations (25-35 minutes), particularly during afternoons, indicating recreational use and tourism. The narrow "waist" in member distributions during peak hours further supports the commuter behavior pattern.</p>
+                </div>
+            </div>
+
+            <div class="visualization-container">
+                <div class="chart-controls">
+                    <select id="dayType">
+                        <option value="compare">Compare Weekday vs Weekend</option>
+                        <option value="all">All Days</option>
+                        <option value="weekday">Weekdays</option>
+                        <option value="weekend">Weekends</option>
+                    </select>
+                </div>
+                <div id="hourly-trips" class="visualization"></div>
+                <div class="visualization-description">
+                    <h3>Weekday vs Weekend Usage Patterns</h3>
+                    <p>The stark contrast between weekday and weekend usage patterns reinforces BlueBike's dual role in Boston's transportation ecosystem. Weekdays show pronounced peaks during typical commute hours (7-9AM and 4-6PM), with volume nearly doubling during these times. Weekend usage follows a more leisurely pattern with a single afternoon peak, suggesting recreational use. This pattern strongly correlates with university class schedules and traditional work hours.</p>
+                </div>
+            </div>
+
+            <div class="visualization-container">
+                <div id="trips-heatmap" class="visualization"></div>
+                <div class="visualization-description">
+                    <h3>Weekly Usage Patterns</h3>
+                    <p>The heatmap reveals consistent high-volume periods during weekday commute hours, particularly intense on Tuesday through Thursday. The clear distinction between weekday and weekend patterns, combined with the concentration around university areas, suggests that BlueBikes serves as a crucial last-mile solution for students and workers connecting to public transit hubs.</p>
+                </div>
+            </div>
+
+            <div class="visualization-container">
+                <div id="daily-usage-altair" class="visualization"></div>
+                <div class="visualization-description">
+                    <h3>Member vs Casual Usage Throughout the Week</h3>
+                    <p>The weekly usage comparison dramatically illustrates the impact of university and commuter memberships. Member rides dominate weekdays with nearly triple the volume of casual rides, peaking at over 1,200 trips mid-week. The sharp drop in member usage on weekends, contrasted with steady casual ridership, further emphasizes BlueBike's dual role in serving both commuter and recreational needs.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="conclusions">
+            <h2>Key Findings</h2>
+            <ul>
+                <li>University partnerships drive system success: Stations near MIT and Harvard show consistently higher usage, with some locations handling over 200 trips daily, demonstrating the effectiveness of student discount programs.</li>
+                <li>Clear commuter patterns: Member rides show distinct rush-hour peaks and consistent trip durations, indicating reliable commuter usage patterns aligned with academic and work schedules.</li>
+                <li>Dual-purpose system: BlueBikes effectively serves both commuter needs (shorter, routine trips) and recreational use (longer, variable-duration trips), with clear temporal separation between these use cases.</li>
+                <li>Transit hub integration: High-volume stations near major transit points (e.g., Kendall/MIT, Harvard Square) suggest successful integration with public transportation.</li>
+            </ul>
+
+            <h2>Future Work</h2>
+            <p>Future analysis could explore:</p>
+            <ul>
+                <li>Impact of seasonal weather patterns on ridership, particularly around academic calendars</li>
+                <li>Effectiveness of student discount programs in driving adoption rates</li>
+                <li>Relationship between station usage and proximity to public transit connections</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>Data visualization project for DS4200 - Information Visualization</p>
+    </footer>
+
+    <script src="visualizations.js"></script>
+</body>
+</html> 

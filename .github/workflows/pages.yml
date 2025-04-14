@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -26,37 +26,29 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: 'requirements.txt'
+          cache-dependency-path: |
+            requirements.txt
+          cache-prefix: 'py311'
       
       - name: Install dependencies
         run: |
-          echo "Starting pip install at $(date)"
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
-          echo "Finished pip install at $(date)"
       
       - name: Verify data file
         run: |
-          echo "Verifying data file..."
           if [ ! -f "202501-bluebikes-tripdata.csv" ]; then
             echo "Error: Data file not found!"
             exit 1
           fi
-          echo "Data file found."
       
       - name: Generate static files
         run: |
-          echo "Starting static file generation at $(date)"
           python generate_static_data.py
-          echo "Verifying generated files..."
-          ls -la static/
           if [ ! -f "static/data.js" ]; then
             echo "Error: data.js not generated!"
             exit 1
           fi
-          echo "Checking data.js content..."
-          head -n 5 static/data.js
-          echo "Finished static file generation at $(date)"
       
       - name: Create deployment directory
         run: |
@@ -65,9 +57,6 @@ jobs:
           cp .nojekyll deploy/
           cp 202501-bluebikes-tripdata.csv deploy/
           cp index.html deploy/
-          echo "Deployment directory structure:"
-          ls -la deploy/
-          ls -la deploy/static/
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -76,6 +65,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: "deploy"
+          retention-days: 1
 
   deploy:
     environment:

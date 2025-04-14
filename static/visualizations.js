@@ -7,7 +7,7 @@ async function loadVisualizationData() {
         // Get the base URL for the current environment
         const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? '.' 
-            : '/data-visualization-bluebikes';
+            : window.location.pathname.split('/')[1] ? `/${window.location.pathname.split('/')[1]}` : '';
         
         // Load the data from the static files using relative paths
         const [stationsData, durationsData, hourlyData, dailyData] = await Promise.all([

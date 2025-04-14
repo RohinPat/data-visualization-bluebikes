@@ -1,93 +1,15 @@
 // Global flag to track initialization state
 let isInitialized = false;
 
-// Function to load visualization data from the server
+// Function to load visualization data
 async function loadVisualizationData() {
     try {
-        // Load data from the Flask endpoint
-        const response = await fetch('/data');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Use the data from data.js directly
+        if (typeof visualizationData === 'undefined') {
+            throw new Error('Visualization data not loaded');
         }
-        const stations = await response.json();
-        console.log('Loaded station data:', stations);
-
-        // Transform station data into visualization format for other charts
-        const data = {
-            station_data: stations, // Add the raw station data
-            heatmap: {
-                data: [{
-                    type: 'heatmap',
-                    x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    y: Array.from({length: 24}, (_, i) => i),
-                    z: Array.from({length: 24}, () => 
-                        Array.from({length: 7}, () => Math.floor(Math.random() * 100))
-                    ),
-                    colorscale: 'Viridis'
-                }],
-                layout: {
-                    title: 'Weekly Trip Patterns',
-                    xaxis: { title: 'Day of Week' },
-                    yaxis: { title: 'Hour of Day' }
-                }
-            },
-            daily_usage: {
-                data: [{
-                    type: 'bar',
-                    x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    y: [1200, 1300, 1400, 1500, 1600, 1000, 800],
-                    marker: { color: 'rgb(55, 83, 109)' }
-                }],
-                layout: {
-                    title: 'Daily Trip Distribution',
-                    xaxis: { title: 'Day of Week' },
-                    yaxis: { title: 'Number of Trips' }
-                }
-            },
-            hourly_trips: {
-                data: [{
-                    type: 'scatter',
-                    mode: 'lines',
-                    x: Array.from({length: 24}, (_, i) => i),
-                    y: Array.from({length: 24}, (_, i) => Math.sin(i/24 * Math.PI * 2) * 100 + 500),
-                    line: { color: 'rgb(55, 83, 109)' }
-                }],
-                layout: {
-                    title: 'Hourly Trip Distribution',
-                    xaxis: { title: 'Hour of Day' },
-                    yaxis: { title: 'Number of Trips' }
-                }
-            },
-            violin_data: {
-                data: [{
-                    type: 'violin',
-                    y: Array.from({length: 1000}, () => Math.random() * 60),
-                    box: { visible: true },
-                    line: { color: 'black' },
-                    fillcolor: 'rgb(55, 83, 109)',
-                    opacity: 0.6
-                }],
-                layout: {
-                    title: 'Trip Duration Distribution',
-                    yaxis: { title: 'Duration (minutes)' }
-                }
-            },
-            station_rankings: {
-                data: [{
-                    type: 'bar',
-                    x: stations.slice(0, 10).map(s => s.name),
-                    y: stations.slice(0, 10).map(s => s.trips),
-                    marker: { color: 'rgb(55, 83, 109)' }
-                }],
-                layout: {
-                    title: 'Top 10 Most Used Stations',
-                    xaxis: { title: 'Station' },
-                    yaxis: { title: 'Number of Trips' }
-                }
-            }
-        };
-
-        return data;
+        console.log('Loaded visualization data:', visualizationData);
+        return visualizationData;
     } catch (error) {
         console.error('Error loading visualization data:', error);
         return null;

@@ -96,13 +96,6 @@ class DataProcessor:
         station_data['lat'] = station_data['lat'].round(4)
         station_data['lng'] = station_data['lng'].round(4)
         station_data['trips'] = station_data['trips'].astype(int)
+        station_data['name'] = station_data['name'].apply(self.clean_station_name)
         
-        return [
-            {
-                'name': self.clean_station_name(row['name']),
-                'lat': row['lat'],
-                'lng': row['lng'],
-                'trips': row['trips']
-            }
-            for _, row in station_data.iterrows()
-        ] 
+        return station_data.to_dict('records') 

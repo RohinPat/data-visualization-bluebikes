@@ -9,7 +9,9 @@ import altair as alt
 app = Flask(__name__)
 
 def load_and_process_data():
-    df = pd.read_csv('202501-bluebikes-tripdata.csv')
+    # Use absolute path for Vercel
+    data_path = os.path.join(os.path.dirname(__file__), '202501-bluebikes-tripdata.csv')
+    df = pd.read_csv(data_path)
     df['started_at'] = pd.to_datetime(df['started_at'])
     df['ended_at'] = pd.to_datetime(df['ended_at'])
     df['duration_minutes'] = (df['ended_at'] - df['started_at']).dt.total_seconds() / 60
@@ -322,6 +324,4 @@ def get_data():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    os.makedirs('static', exist_ok=True)
-    get_cached_visualizations()
     app.run(debug=True) 

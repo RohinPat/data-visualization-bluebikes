@@ -1,5 +1,6 @@
 import plotly.express as px
 import altair as alt
+import pandas as pd
 
 class VisualizationGenerator:
     def __init__(self, data_processor):
@@ -200,28 +201,23 @@ class VisualizationGenerator:
     def _generate_violin_data(self):
         """Generate violin plot data."""
         df = self.data_processor.data
-        violin_data = {
-            'Morning': {'member': [], 'casual': []},
-            'Afternoon': {'member': [], 'casual': []},
-            'Evening': {'member': [], 'casual': []},
-            'Night': {'member': [], 'casual': []}
-        }
-
-        for _, row in df.iterrows():
-            hour = row['hour']
-            user_type = row['member_casual']
-            duration = row['duration_minutes']
-            
-            if 5 <= hour < 12:
-                period = 'Morning'
-            elif 12 <= hour < 17:
-                period = 'Afternoon'
-            elif 17 <= hour < 22:
-                period = 'Evening'
-            else:
-                period = 'Night'
-                
-            violin_data[period][user_type].append(duration)
+        
+        # Create a new column for time period
+        df['period'] = pd.cut(
+            df['hour'],
+            bins=[0, 5, 12, 17, 22, 24],
+            labels=['Night', 'Morning', 'Afternoon', 'Evening', 'Night'],
+            right=False
+        )
+        
+        # Group by period and user type, then aggregate durations
+        violin_data = {}
+        for period in ['Morning', 'Afternoon', 'Evening', 'Night']:
+            period_data = df[df['period'] == period]
+            violin_data[period] = {
+                'member': period_data[period_data['member_casual'] == 'member']['duration_minutes'].tolist(),
+                'casual': period_data[period_data['member_casual'] == 'casual']['duration_minutes'].tolist()
+            }
 
         return violin_data
 

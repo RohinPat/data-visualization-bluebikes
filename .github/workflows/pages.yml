@@ -53,6 +53,15 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
+      - name: Prepare deployment
+        run: |
+          # Create docs directory if it doesn't exist
+          mkdir -p docs
+          # Copy index.html to docs
+          cp templates/index.html docs/
+          # Copy static directory to docs
+          cp -r static docs/
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

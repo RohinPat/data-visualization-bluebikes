@@ -101,11 +101,10 @@
 
             <div class="visualization-container">
                 <div class="chart-controls">
-                    <select id="dayType">
-                        <option value="compare">Compare Weekday vs Weekend</option>
-                        <option value="all">All Days</option>
-                        <option value="weekday">Weekdays</option>
-                        <option value="weekend">Weekends</option>
+                    <select id="viewType">
+                        <option value="weekday_weekend">Weekday vs Weekend</option>
+                        <option value="all_types">All Types (Member/Casual, Weekday/Weekend)</option>
+                        <option value="member_casual">Member vs Casual</option>
                     </select>
                 </div>
                 <div id="hourly-trips" class="visualization"></div>
@@ -126,8 +125,8 @@
             <div class="visualization-container">
                 <div id="daily-usage-altair" class="visualization"></div>
                 <div class="visualization-description">
-                    <h3>Member vs Casual Usage Throughout the Week</h3>
-                    <p>The weekly usage comparison dramatically illustrates the impact of university and commuter memberships. Member rides dominate weekdays with nearly triple the volume of casual rides, peaking at over 1,200 trips mid-week. The sharp drop in member usage on weekends, contrasted with steady casual ridership, further emphasizes BlueBike's dual role in serving both commuter and recreational needs.</p>
+                    <h3>Total Daily Trip Distribution</h3>
+                    <p>The daily trip distribution shows how bike usage varies throughout the week. Usage peaks during mid-week (Wednesday-Friday) with over 1,700 trips per day, while weekend days show lower usage around 1,000 trips. This pattern suggests strong commuter usage during weekdays, with reduced recreational usage on weekends.</p>
                 </div>
             </div>
         </section>
@@ -155,6 +154,7 @@
         <p>Data visualization project for DS4200 - Information Visualization</p>
     </footer>
 
+    <!-- Load data first, then visualizations -->
     <script src="static/data.js"></script>
     <script src="static/visualizations.js"></script>
 </body>

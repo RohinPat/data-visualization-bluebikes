@@ -96,32 +96,32 @@ def generate_heatmap_data(df):
     
     # Create the pivot table with all hours
     heatmap_data = df.pivot_table(
-        index='hour',
-        columns='day_of_week',
+        index='day_of_week',
+        columns='hour',
         values='ride_id',
         aggfunc='count',
         fill_value=0
     )
     
-    # Ensure all hours are present (0-23)
-    all_hours = pd.DataFrame(index=range(24))
-    heatmap_data = all_hours.join(heatmap_data).fillna(0)
-    
-    # Reorder columns to match the expected format
+    # Order days from Monday to Sunday
     days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    heatmap_data = heatmap_data.reindex(columns=days_order, fill_value=0)
+    heatmap_data = heatmap_data.reindex(index=days_order, fill_value=0)
     
-    # Convert to Python types and transpose the data for proper visualization
+    # Ensure all hours are present (0-23)
+    all_hours = range(24)
+    heatmap_data = heatmap_data.reindex(columns=all_hours, fill_value=0)
+    
+    # Convert to Python types
     z_data = heatmap_data.values.astype(int).tolist()
     
     return {
         'type': 'heatmap',
-        'x': days_order,
-        'y': list(range(24)),
+        'x': list(range(24)),
+        'y': days_order,
         'z': z_data,
         'colorscale': 'Viridis',
         'hoverongaps': False,
-        'hovertemplate': 'Day: %{x}<br>Hour: %{y}<br>Trips: %{z}<extra></extra>'
+        'hovertemplate': 'Hour: %{x}<br>Day: %{y}<br>Trips: %{z}<extra></extra>'
     }
 
 def generate_daily_usage_data(df):
@@ -220,9 +220,9 @@ def main():
         'heatmap': {
             'data': [generate_heatmap_data(df)],
             'layout': {
-                'title': 'Weekly Trip Patterns',
-                'xaxis': {'title': 'Day of Week'},
-                'yaxis': {'title': 'Hour of Day'}
+                'title': 'Weekly Trip Patterns by Hour',
+                'xaxis': {'title': 'Hour of Day'},
+                'yaxis': {'title': 'Day of Week'}
             }
         },
         'daily_usage': {

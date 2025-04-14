@@ -69,15 +69,19 @@ async function loadVisualizationData() {
             fetch(`${baseUrl}/static/daily_usage.json`).then(res => res.json())
         ]);
 
-        const visualizationData = {
-            stations: stationsData,
+        const data = {
+            stations: visualizationData.station_data,
             durations: durationsData,
             hourlyUsage: hourlyData,
-            dailyUsage: dailyData
+            dailyUsage: visualizationData.daily_usage.data[0].y.map((count, index) => ({
+                member_casual: 'member',
+                day: visualizationData.daily_usage.data[0].x[index],
+                count: count
+            }))
         };
 
-        console.log('Loaded visualization data:', visualizationData);
-        return visualizationData;
+        console.log('Loaded visualization data:', data);
+        return data;
     } catch (error) {
         console.error('Error loading visualization data:', error);
         return null;
@@ -97,22 +101,22 @@ function createHeatmap(data) {
     const layout = {
         title: 'Weekly Trip Patterns by Hour',
         xaxis: {
-            title: 'Day of Week',
-            tickangle: -45,
-            range: [0, 6]  // Focus on the 7 days
-        },
-        yaxis: {
             title: 'Hour of Day',
             tickmode: 'linear',
             tick0: 0,
             dtick: 1,
             range: [0, 23]  // Focus on the 24 hours
         },
+        yaxis: {
+            title: 'Day of Week',
+            tickangle: 0,
+            range: [-0.5, 6.5]  // Focus on the 7 days
+        },
         margin: {
-            b: 100,  // Add more bottom margin for rotated labels
-            t: 50,   // Add top margin
-            l: 50,   // Add left margin
-            r: 50    // Add right margin
+            b: 50,   // Bottom margin
+            t: 50,   // Top margin
+            l: 100,  // Increased left margin for day labels
+            r: 50    // Right margin
         },
         coloraxis: {
             colorscale: 'Viridis',
@@ -134,63 +138,44 @@ function createHeatmap(data) {
 
 // Function to create the daily usage visualization
 function createDailyUsage(data) {
-    if (!data || !Array.isArray(data)) {
-        console.error('No daily usage data available');
-        return;
-    }
-    
     const container = document.getElementById('daily-usage-altair');
     if (!container) {
         console.error('Daily usage container not found');
         return;
     }
 
-    // Process data for daily usage
-    const memberData = data.filter(d => d.member_casual === 'member');
-    const casualData = data.filter(d => d.member_casual === 'casual');
+    // Get the data from the visualization data object
+    const dailyData = visualizationData.daily_usage;
+    if (!dailyData || !dailyData.data || !dailyData.data[0]) {
+        console.error('No daily usage data available');
+        return;
+    }
 
-    const trace1 = {
-        x: memberData.map(d => d.day),
-        y: memberData.map(d => d.count),
-        name: 'Member',
+    const trace = {
+        x: dailyData.data[0].x,
+        y: dailyData.data[0].y,
         type: 'bar',
-        marker: { color: 'blue' }
-    };
-
-    const trace2 = {
-        x: casualData.map(d => d.day),
-        y: casualData.map(d => d.count),
-        name: 'Casual',
-        type: 'bar',
-        marker: { color: 'red' }
+        marker: { color: 'rgb(55, 83, 109)' }
     };
 
     const layout = {
-        title: 'Daily Usage by User Type',
-        barmode: 'group',
+        title: 'Total Daily Trip Distribution',
         xaxis: { 
-            title: 'Day of Week',
-            range: [-0.5, 6.5]  // Focus on the 7 days
+            title: 'Day of Week'
         },
         yaxis: { 
             title: 'Number of Trips',
-            range: [0, Math.max(...memberData.map(d => d.count), ...casualData.map(d => d.count)) * 1.1]  // Add 10% padding
+            range: [0, Math.max(...dailyData.data[0].y) * 1.1]  // Add 10% padding
         },
         margin: {
             t: 50,
             b: 50,
             l: 50,
             r: 50
-        },
-        showlegend: true,
-        legend: {
-            x: 1,
-            xanchor: 'right',
-            y: 1
         }
     };
 
-    Plotly.newPlot('daily-usage-altair', [trace1, trace2], layout);
+    Plotly.newPlot('daily-usage-altair', [trace], layout);
 }
 
 // Function to create the hourly trips visualization
@@ -212,47 +197,127 @@ function createHourlyTrips(data) {
     const memberWeekend = data.filter(d => d.member_casual === 'member' && d.day_type === 'weekend');
     const casualWeekend = data.filter(d => d.member_casual === 'casual' && d.day_type === 'weekend');
 
-    const traces = [
-        {
-            x: memberWeekday.map(d => d.hour),
-            y: memberWeekday.map(d => d.count),
-            name: 'Member (Weekday)',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: { color: 'blue' },
-            marker: { color: 'blue' }
-        },
-        {
-            x: casualWeekday.map(d => d.hour),
-            y: casualWeekday.map(d => d.count),
-            name: 'Casual (Weekday)',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: { color: 'red' },
-            marker: { color: 'red' }
-        },
-        {
-            x: memberWeekend.map(d => d.hour),
-            y: memberWeekend.map(d => d.count),
-            name: 'Member (Weekend)',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: { color: 'lightblue', dash: 'dash' },
-            marker: { color: 'lightblue' }
-        },
-        {
-            x: casualWeekend.map(d => d.hour),
-            y: casualWeekend.map(d => d.count),
-            name: 'Casual (Weekend)',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: { color: 'pink', dash: 'dash' },
-            marker: { color: 'pink' }
-        }
-    ];
+    // Get the selected view type
+    const viewType = document.getElementById('viewType').value;
+
+    let traces = [];
+    let title = '';
+
+    switch(viewType) {
+        case 'weekday_weekend':
+            // Combine member and casual for each day type
+            const weekdayTotal = memberWeekday.map((d, i) => ({
+                hour: d.hour,
+                count: d.count + (casualWeekday[i] ? casualWeekday[i].count : 0)
+            }));
+            const weekendTotal = memberWeekend.map((d, i) => ({
+                hour: d.hour,
+                count: d.count + (casualWeekend[i] ? casualWeekend[i].count : 0)
+            }));
+            
+            traces = [
+                {
+                    x: weekdayTotal.map(d => d.hour),
+                    y: weekdayTotal.map(d => d.count),
+                    name: 'Weekday',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'blue' },
+                    marker: { color: 'blue' }
+                },
+                {
+                    x: weekendTotal.map(d => d.hour),
+                    y: weekendTotal.map(d => d.count),
+                    name: 'Weekend',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'red' },
+                    marker: { color: 'red' }
+                }
+            ];
+            title = 'Hourly Trips by Day Type';
+            break;
+
+        case 'member_casual':
+            // Combine weekday and weekend for each user type
+            const memberTotal = memberWeekday.map((d, i) => ({
+                hour: d.hour,
+                count: d.count + (memberWeekend[i] ? memberWeekend[i].count : 0)
+            }));
+            const casualTotal = casualWeekday.map((d, i) => ({
+                hour: d.hour,
+                count: d.count + (casualWeekend[i] ? casualWeekend[i].count : 0)
+            }));
+            
+            traces = [
+                {
+                    x: memberTotal.map(d => d.hour),
+                    y: memberTotal.map(d => d.count),
+                    name: 'Member',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'blue' },
+                    marker: { color: 'blue' }
+                },
+                {
+                    x: casualTotal.map(d => d.hour),
+                    y: casualTotal.map(d => d.count),
+                    name: 'Casual',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'red' },
+                    marker: { color: 'red' }
+                }
+            ];
+            title = 'Hourly Trips by User Type';
+            break;
+
+        case 'all_types':
+        default:
+            traces = [
+                {
+                    x: memberWeekday.map(d => d.hour),
+                    y: memberWeekday.map(d => d.count),
+                    name: 'Member (Weekday)',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'blue' },
+                    marker: { color: 'blue' }
+                },
+                {
+                    x: casualWeekday.map(d => d.hour),
+                    y: casualWeekday.map(d => d.count),
+                    name: 'Casual (Weekday)',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'red' },
+                    marker: { color: 'red' }
+                },
+                {
+                    x: memberWeekend.map(d => d.hour),
+                    y: memberWeekend.map(d => d.count),
+                    name: 'Member (Weekend)',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'lightblue', dash: 'dash' },
+                    marker: { color: 'lightblue' }
+                },
+                {
+                    x: casualWeekend.map(d => d.hour),
+                    y: casualWeekend.map(d => d.count),
+                    name: 'Casual (Weekend)',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: 'pink', dash: 'dash' },
+                    marker: { color: 'pink' }
+                }
+            ];
+            title = 'Hourly Trips by User Type and Day Type';
+            break;
+    }
 
     const layout = {
-        title: 'Hourly Trips by User Type and Day Type',
+        title: title,
         xaxis: { 
             title: 'Hour of Day',
             range: [0, 23]  // Focus on the 24 hours
@@ -260,10 +325,7 @@ function createHourlyTrips(data) {
         yaxis: { 
             title: 'Number of Trips',
             range: [0, Math.max(
-                ...memberWeekday.map(d => d.count),
-                ...casualWeekday.map(d => d.count),
-                ...memberWeekend.map(d => d.count),
-                ...casualWeekend.map(d => d.count)
+                ...traces.flatMap(trace => trace.y)
             ) * 1.1]  // Add 10% padding
         },
         margin: {
@@ -639,6 +701,9 @@ async function initializeVisualizations() {
     try {
         const data = await loadVisualizationData();
         if (data) {
+            // Store hourly usage data in global scope
+            window.hourlyTripsData = data.hourlyUsage;
+            
             // Create station map first
             createStationMap(data.stations);
             
@@ -661,4 +726,15 @@ async function initializeVisualizations() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, starting initialization...');
     initializeVisualizations();
+});
+
+// Add event listener for dropdown change
+document.addEventListener('DOMContentLoaded', function() {
+    const viewTypeSelect = document.getElementById('viewType');
+    if (viewTypeSelect) {
+        viewTypeSelect.addEventListener('change', function() {
+            // Assuming the data is available in the global scope
+            createHourlyTrips(window.hourlyTripsData);
+        });
+    }
 }); 

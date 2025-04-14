@@ -40,9 +40,23 @@ class DataProcessor:
         
         # Sample if dataset is too large
         if len(df_clean) > 10000:
-            df_clean = df_clean.groupby(['day_of_week', 'member_casual'], observed=True, group_keys=False).apply(
-                lambda x: x.sample(n=max(1, int(10000 * len(x) / len(df_clean))), random_state=42)
-            )
+            # Calculate sample size for each group
+            group_sizes = df_clean.groupby(['day_of_week', 'member_casual'], observed=True).size()
+            sample_sizes = (group_sizes * 10000 / len(df_clean)).round().astype(int)
+            
+            # Sample from each group
+            sampled_groups = []
+            for (day, user_type), size in sample_sizes.items():
+                group_data = df_clean[
+                    (df_clean['day_of_week'] == day) & 
+                    (df_clean['member_casual'] == user_type)
+                ]
+                if len(group_data) > 0:
+                    sampled_groups.append(
+                        group_data.sample(n=min(size, len(group_data)), random_state=42)
+                    )
+            
+            df_clean = pd.concat(sampled_groups)
         
         self._data = df_clean
 

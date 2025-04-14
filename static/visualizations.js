@@ -2,12 +2,23 @@
 let isInitialized = false;
 
 // Function to load visualization data
-function loadVisualizationData() {
+async function loadVisualizationData() {
     try {
-        // Use the data from data.js directly
-        if (typeof visualizationData === 'undefined') {
-            throw new Error('Visualization data not loaded');
-        }
+        // Load the data from the static files
+        const [stationsData, durationsData, hourlyData, dailyData] = await Promise.all([
+            fetch('/static/stations.json').then(res => res.json()),
+            fetch('/static/durations.json').then(res => res.json()),
+            fetch('/static/hourly_usage.json').then(res => res.json()),
+            fetch('/static/daily_usage.json').then(res => res.json())
+        ]);
+
+        const visualizationData = {
+            stations: stationsData,
+            durations: durationsData,
+            hourlyUsage: hourlyData,
+            dailyUsage: dailyData
+        };
+
         console.log('Loaded visualization data:', visualizationData);
         return visualizationData;
     } catch (error) {
@@ -18,23 +29,43 @@ function loadVisualizationData() {
 
 // Function to create the heatmap visualization
 function createHeatmap(data) {
-    if (!data || !data.heatmap) {
-        console.error('No heatmap data available');
-        return;
-    }
-    
     const container = document.getElementById('trips-heatmap');
     if (!container) {
         console.error('Heatmap container not found');
         return;
     }
-    
-    Plotly.newPlot('trips-heatmap', data.heatmap.data, data.heatmap.layout);
+
+    // Get the heatmap data from the visualization data
+    const heatmapData = visualizationData.heatmap.data[0];
+    const layout = {
+        title: 'Weekly Trip Patterns by Hour',
+        xaxis: {
+            title: 'Day of Week',
+            tickangle: -45
+        },
+        yaxis: {
+            title: 'Hour of Day',
+            tickmode: 'linear',
+            tick0: 0,
+            dtick: 1
+        },
+        margin: {
+            b: 100  // Add more bottom margin for rotated labels
+        },
+        coloraxis: {
+            colorscale: 'Viridis',
+            colorbar: {
+                title: 'Number of Trips'
+            }
+        }
+    };
+
+    Plotly.newPlot('trips-heatmap', [heatmapData], layout);
 }
 
 // Function to create the daily usage visualization
 function createDailyUsage(data) {
-    if (!data || !data.daily_usage) {
+    if (!data || !Array.isArray(data)) {
         console.error('No daily usage data available');
         return;
     }
@@ -44,13 +75,38 @@ function createDailyUsage(data) {
         console.error('Daily usage container not found');
         return;
     }
-    
-    Plotly.newPlot('daily-usage-altair', data.daily_usage.data, data.daily_usage.layout);
+
+    // Process data for daily usage
+    const memberData = data.filter(d => d.member_casual === 'member');
+    const casualData = data.filter(d => d.member_casual === 'casual');
+
+    const trace1 = {
+        x: memberData.map(d => d.day),
+        y: memberData.map(d => d.count),
+        name: 'Member',
+        type: 'bar'
+    };
+
+    const trace2 = {
+        x: casualData.map(d => d.day),
+        y: casualData.map(d => d.count),
+        name: 'Casual',
+        type: 'bar'
+    };
+
+    const layout = {
+        title: 'Daily Usage by User Type',
+        barmode: 'group',
+        xaxis: { title: 'Day of Week' },
+        yaxis: { title: 'Number of Trips' }
+    };
+
+    Plotly.newPlot('daily-usage-altair', [trace1, trace2], layout);
 }
 
 // Function to create the hourly trips visualization
 function createHourlyTrips(data) {
-    if (!data || !data.hourly_trips) {
+    if (!data || !Array.isArray(data)) {
         console.error('No hourly trips data available');
         return;
     }
@@ -60,13 +116,56 @@ function createHourlyTrips(data) {
         console.error('Hourly trips container not found');
         return;
     }
-    
-    Plotly.newPlot('hourly-trips', data.hourly_trips.data, data.hourly_trips.layout);
+
+    // Process data for hourly trips
+    const memberWeekday = data.filter(d => d.member_casual === 'member' && d.day_type === 'weekday');
+    const casualWeekday = data.filter(d => d.member_casual === 'casual' && d.day_type === 'weekday');
+    const memberWeekend = data.filter(d => d.member_casual === 'member' && d.day_type === 'weekend');
+    const casualWeekend = data.filter(d => d.member_casual === 'casual' && d.day_type === 'weekend');
+
+    const traces = [
+        {
+            x: memberWeekday.map(d => d.hour),
+            y: memberWeekday.map(d => d.count),
+            name: 'Member (Weekday)',
+            type: 'scatter',
+            mode: 'lines+markers'
+        },
+        {
+            x: casualWeekday.map(d => d.hour),
+            y: casualWeekday.map(d => d.count),
+            name: 'Casual (Weekday)',
+            type: 'scatter',
+            mode: 'lines+markers'
+        },
+        {
+            x: memberWeekend.map(d => d.hour),
+            y: memberWeekend.map(d => d.count),
+            name: 'Member (Weekend)',
+            type: 'scatter',
+            mode: 'lines+markers'
+        },
+        {
+            x: casualWeekend.map(d => d.hour),
+            y: casualWeekend.map(d => d.count),
+            name: 'Casual (Weekend)',
+            type: 'scatter',
+            mode: 'lines+markers'
+        }
+    ];
+
+    const layout = {
+        title: 'Hourly Trips by User Type and Day Type',
+        xaxis: { title: 'Hour of Day' },
+        yaxis: { title: 'Number of Trips' }
+    };
+
+    Plotly.newPlot('hourly-trips', traces, layout);
 }
 
 // Function to create the violin plot
 function createViolinPlot(data) {
-    if (!data || !data.violin_data) {
+    if (!data || !Array.isArray(data)) {
         console.error('No violin plot data available');
         return;
     }
@@ -76,13 +175,68 @@ function createViolinPlot(data) {
         console.error('Violin plot container not found');
         return;
     }
-    
-    Plotly.newPlot('duration-violin', data.violin_data.data, data.violin_data.layout);
+
+    // Process data for violin plot
+    const memberData = data.filter(d => d.member_casual === 'member');
+    const casualData = data.filter(d => d.member_casual === 'casual');
+
+    const traces = [
+        {
+            x: memberData.map(d => d.hour),
+            y: memberData.map(d => d.mean),
+            error_y: {
+                type: 'data',
+                array: memberData.map(d => d.std),
+                visible: true
+            },
+            name: 'Member',
+            type: 'scatter',
+            mode: 'lines+markers',
+            line: { color: 'blue' },
+            marker: { color: 'blue' }
+        },
+        {
+            x: casualData.map(d => d.hour),
+            y: casualData.map(d => d.mean),
+            error_y: {
+                type: 'data',
+                array: casualData.map(d => d.std),
+                visible: true
+            },
+            name: 'Casual',
+            type: 'scatter',
+            mode: 'lines+markers',
+            line: { color: 'red' },
+            marker: { color: 'red' }
+        }
+    ];
+
+    const layout = {
+        title: 'Average Trip Duration by Hour and User Type',
+        xaxis: { 
+            title: 'Hour of Day',
+            tickmode: 'linear',
+            tick0: 0,
+            dtick: 1
+        },
+        yaxis: { 
+            title: 'Duration (minutes)',
+            range: [0, 40] // Adjust based on your data range
+        },
+        showlegend: true,
+        legend: {
+            x: 1,
+            xanchor: 'right',
+            y: 1
+        }
+    };
+
+    Plotly.newPlot('duration-violin', traces, layout);
 }
 
 // Function to create the station usage chart
 function createStationUsage(data) {
-    if (!data || !data.station_rankings) {
+    if (!data || !Array.isArray(data)) {
         console.error('No station rankings data available');
         return;
     }
@@ -92,8 +246,25 @@ function createStationUsage(data) {
         console.error('Station usage chart container not found');
         return;
     }
-    
-    Plotly.newPlot('station-usage-chart', data.station_rankings.data, data.station_rankings.layout);
+
+    // Process data for station usage
+    const topStations = data
+        .sort((a, b) => b.trips - a.trips)
+        .slice(0, 10);
+
+    const trace = {
+        x: topStations.map(s => s.name),
+        y: topStations.map(s => s.trips),
+        type: 'bar'
+    };
+
+    const layout = {
+        title: 'Top 10 Stations by Trip Volume',
+        xaxis: { title: 'Station Name', tickangle: 45 },
+        yaxis: { title: 'Number of Trips' }
+    };
+
+    Plotly.newPlot('station-usage-chart', [trace], layout);
 }
 
 // Function to create the station map visualization
@@ -222,35 +393,38 @@ function setupMapFilters(stations, stationsLayer, map) {
     });
 }
 
-// Initialize all visualizations
-function initializeVisualizations() {
-    // Prevent multiple initializations
+// Function to initialize all visualizations
+async function initializeVisualizations() {
     if (isInitialized) {
-        console.log('Visualizations already initialized, skipping');
+        console.log('Visualizations already initialized');
         return;
     }
-    
+
     console.log('Initializing visualizations...');
-    const data = loadVisualizationData();
     
-    if (data) {
-        // Create station map first
-        createStationMap(data.station_data);
-        
-        // Then create other visualizations
-        createHeatmap(data);
-        createDailyUsage(data);
-        createHourlyTrips(data);
-        createViolinPlot(data);
-        createStationUsage(data);
-        
-        // Mark as initialized
-        isInitialized = true;
+    try {
+        const data = await loadVisualizationData();
+        if (data) {
+            // Create station map first
+            createStationMap(data.stations);
+            
+            // Then create other visualizations
+            createHeatmap(data.hourlyUsage);
+            createDailyUsage(data.dailyUsage);
+            createHourlyTrips(data.hourlyUsage);
+            createViolinPlot(data.durations);
+            createStationUsage(data.stations);
+            
+            isInitialized = true;
+            console.log('Visualizations initialized successfully');
+        }
+    } catch (error) {
+        console.error('Error initializing visualizations:', error);
     }
 }
 
-// Wait for the DOM to be loaded before initializing
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, starting initialization...');
     initializeVisualizations();
 }); 

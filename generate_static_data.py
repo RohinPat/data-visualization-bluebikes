@@ -8,6 +8,9 @@ def convert_to_python_types(obj):
     if isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
+        # Convert NaN to None
+        if np.isnan(obj):
+            return None
         return float(obj)
     elif isinstance(obj, np.ndarray):
         return obj.tolist()
@@ -44,6 +47,10 @@ def process_trip_durations(df):
     df['hour'] = df['started_at'].dt.hour
     duration_stats = df.groupby(['member_casual', 'hour'])['duration_minutes'].agg(['mean', 'std']).reset_index()
     
+    # Fill NaN values with 0 for mean and std
+    duration_stats['mean'] = duration_stats['mean'].fillna(0)
+    duration_stats['std'] = duration_stats['std'].fillna(0)
+    
     # Convert to Python types
     duration_stats['mean'] = duration_stats['mean'].astype(float)
     duration_stats['std'] = duration_stats['std'].astype(float)
@@ -70,6 +77,8 @@ def generate_heatmap_data(df):
     # Create a pivot table for the heatmap
     df['day_of_week'] = df['started_at'].dt.day_name()
     df['hour'] = df['started_at'].dt.hour
+    
+    # Create the pivot table with all hours
     heatmap_data = df.pivot_table(
         index='hour',
         columns='day_of_week',
@@ -78,19 +87,25 @@ def generate_heatmap_data(df):
         fill_value=0
     )
     
+    # Ensure all hours are present (0-23)
+    all_hours = pd.DataFrame(index=range(24))
+    heatmap_data = all_hours.join(heatmap_data).fillna(0)
+    
     # Reorder columns to match the expected format
     days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    heatmap_data = heatmap_data[days_order]
+    heatmap_data = heatmap_data.reindex(columns=days_order, fill_value=0)
     
-    # Convert to Python types
+    # Convert to Python types and transpose the data for proper visualization
     z_data = heatmap_data.values.astype(int).tolist()
     
     return {
         'type': 'heatmap',
-        'x': [day[:3] for day in days_order],  # Short day names
+        'x': days_order,
         'y': list(range(24)),
         'z': z_data,
-        'colorscale': 'Viridis'
+        'colorscale': 'Viridis',
+        'hoverongaps': False,
+        'hovertemplate': 'Day: %{x}<br>Hour: %{y}<br>Trips: %{z}<extra></extra>'
     }
 
 def generate_daily_usage_data(df):
@@ -143,6 +158,12 @@ def main():
     # Read the CSV file
     print("Reading data file...")
     df = pd.read_csv('202501-bluebikes-tripdata.csv')
+    
+    # Randomly sample 10,000 cases while preserving the distribution of member_casual
+    print("Sampling data...")
+    df = df.groupby('member_casual', group_keys=False).apply(
+        lambda x: x.sample(min(len(x), int(10000 * len(x) / len(df))))
+    ).reset_index(drop=True)
     
     # Convert date columns to datetime
     df['started_at'] = pd.to_datetime(df['started_at'])

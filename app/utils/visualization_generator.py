@@ -11,8 +11,8 @@ class VisualizationGenerator:
         """Generate hourly trips visualization using Altair."""
         df = self.data_processor.data
         hourly_data = (df.groupby(['hour'], observed=True)
-                      .size()
-                      .reset_index(name='trips')
+                      .agg(trips=('hour', 'count'))
+                      .reset_index()
                       .sort_values('hour'))
         
         base = alt.Chart(hourly_data).encode(
@@ -47,10 +47,10 @@ class VisualizationGenerator:
     def _generate_daily_usage(self):
         """Generate daily usage visualization using Altair."""
         df = self.data_processor.data
-        daily_hourly_trips = df.groupby(
+        daily_hourly_trips = (df.groupby(
             ['day_of_week', 'hour', 'member_casual'], 
             observed=True
-        ).size().reset_index(name='trips')
+        ).agg(trips=('hour', 'count')).reset_index())
         
         highlight = alt.selection_point(fields=['member_casual'])
         
@@ -151,12 +151,16 @@ class VisualizationGenerator:
     def _generate_station_rankings(self):
         """Generate station rankings visualization using Plotly."""
         df = self.data_processor.data
-        top_stations = df['start_station_name'].value_counts().head(10)
-        top_stations.index = top_stations.index.map(self.data_processor.clean_station_name)
+        station_counts = (df.groupby('start_station_name', observed=True)
+                        .agg(count=('start_station_name', 'count'))
+                        .reset_index())
+        
+        top_stations = station_counts.nlargest(10, 'count')
+        top_stations['start_station_name'] = top_stations['start_station_name'].apply(self.data_processor.clean_station_name)
         
         return px.bar(
-            x=top_stations.values,
-            y=top_stations.index,
+            x=top_stations['count'],
+            y=top_stations['start_station_name'],
             orientation='h',
             title='Top 10 Most Popular Starting Stations',
             labels={'x': 'Number of Trips', 'y': 'Station Name'}
@@ -172,7 +176,10 @@ class VisualizationGenerator:
     def _generate_route_rankings(self):
         """Generate route rankings visualization using Plotly."""
         df = self.data_processor.data
-        route_counts = df.groupby(['start_station_name', 'end_station_name']).size().reset_index(name='count')
+        route_counts = (df.groupby(['start_station_name', 'end_station_name'], observed=True)
+                      .agg(count=('start_station_name', 'count'))
+                      .reset_index())
+        
         top_routes = route_counts.nlargest(10, 'count')
         
         top_routes['start_station_name'] = top_routes['start_station_name'].apply(self.data_processor.clean_station_name)

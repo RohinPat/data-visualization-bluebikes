@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueBikes Data Visualization</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>BlueBikes Data Analysis</h1>
+        </div>
+    </header>
+
+    <main>
+        <section class="introduction">
+            <h2>Overview</h2>
+            <p>Analysis of BlueBikes usage patterns across Boston and Cambridge.</p>
+        </section>
+
+        <section class="spatial-analysis">
+            <h2>Spatial Distribution and Station Analysis</h2>
+            <div class="visualization-container">
+                <div class="controls">
+                    <select id="stationView">
+                        <option value="combined">Combined Trips</option>
+                        <option value="starts">Starting Trips</option>
+                        <option value="ends">Ending Trips</option>
+                    </select>
+                    <select id="universityFilter">
+                        <option value="all">All Areas</option>
+                        <option value="mit">MIT Area</option>
+                        <option value="harvard">Harvard Area</option>
+                    </select>
+                </div>
+                <div id="station-usage-chart"></div>
+            </div>
+        </section>
+
+        <section class="temporal-analysis">
+            <h2>Temporal Patterns</h2>
+            <div class="visualization-container">
+                <div class="controls">
+                    <select id="dayType">
+                        <option value="all">All Days</option>
+                        <option value="weekday">Weekdays</option>
+                        <option value="weekend">Weekends</option>
+                    </select>
+                </div>
+                <div id="hourly-trips"></div>
+                <div id="trips-heatmap"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Data source: BlueBikes System Data</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 

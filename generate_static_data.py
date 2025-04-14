@@ -9,15 +9,25 @@ def generate_static_data():
         os.makedirs('static', exist_ok=True)
         
         # Load and process data
-        df = load_and_process_data()
+        data_processor = load_and_process_data()
         
         # Generate visualizations
-        visualizations = generate_visualizations(df)
+        viz_generator = generate_visualizations(data_processor)
+        
+        # Get the visualization data
+        visualization_data = {
+            'hourly_trips': viz_generator._generate_hourly_trips().to_dict(),
+            'daily_usage': viz_generator._generate_daily_usage().to_dict(),
+            'heatmap': viz_generator._generate_heatmap().to_dict(),
+            'station_rankings': viz_generator._generate_station_rankings().to_dict(),
+            'route_rankings': viz_generator._generate_route_rankings().to_dict(),
+            'violin_data': viz_generator._generate_violin_data().to_dict()
+        }
         
         # Write to static/data.js
         with open('static/data.js', 'w') as f:
             f.write('const visualizationData = ')
-            json.dump(visualizations, f, indent=2)
+            json.dump(visualization_data, f, indent=2)
             f.write(';')
         
         print("Successfully generated static data")

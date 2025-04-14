@@ -214,7 +214,8 @@ class VisualizationGenerator:
             df['hour'],
             bins=[0, 5, 12, 17, 22, 24],
             labels=['Night', 'Morning', 'Afternoon', 'Evening', 'Night'],
-            right=False
+            right=False,
+            ordered=False  # Allow duplicate labels since we have two 'Night' periods
         )
         
         # Group by period and user type, then aggregate durations

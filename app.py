@@ -202,18 +202,23 @@ def generate_visualizations(df):
         observed=True
     ).fillna(0)
 
+    # Ensure correct day order
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    pivot_trips = pivot_trips.reindex(day_order)
+
     heatmap = px.imshow(
         pivot_trips,
         labels=dict(x='Hour of Day', y='Day of Week', color='Number of Trips'),
         title='Trip Distribution by Day and Hour',
-        color_continuous_scale='YlOrRd'
+        color_continuous_scale='YlOrRd',
+        aspect='auto'  # Ensure proper aspect ratio
     )
+    
     heatmap.update_layout(
-        xaxis_title='Hour of Day',
-        yaxis_title='Day of Week',
+        height=500,  # Fixed height
+        margin=dict(t=50, r=30, b=80, l=120),  # Adjusted margins
         xaxis=dict(
-            constrain='domain',
-            scaleanchor=None,
+            title='Hour of Day',
             tickmode='linear',
             tick0=0,
             dtick=1,
@@ -221,10 +226,15 @@ def generate_visualizations(df):
             tickvals=list(range(24))
         ),
         yaxis=dict(
-            constrain='domain',
-            scaleanchor=None,
-            categoryorder='array',
-            categoryarray=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            title='Day of Week',
+            tickmode='array',
+            ticktext=day_order,
+            tickvals=list(range(len(day_order))),
+            autorange='reversed'  # Keep Monday at top
+        ),
+        coloraxis_colorbar=dict(
+            title='Number of Trips',
+            tickformat='d'  # Display as integers
         )
     )
 

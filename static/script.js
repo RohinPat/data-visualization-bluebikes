@@ -1489,19 +1489,8 @@ function createDurationViolinPlot(tripData) {
             return;
         }
 
-        // Check if d3 is available
-        if (typeof d3 === 'undefined') {
-            console.error("D3.js library not available for duration violin plot");
-            container.innerHTML = `
-                <div style="text-align: center; padding: 20px; color: #666;">
-                    <h3>Trip Duration Patterns by User Type</h3>
-                    <p>Unable to load visualization library (D3.js).</p>
-                </div>`;
-            return;
-        }
-
         // Clear any existing content
-        d3.select("#duration-violin").html("");
+        container.innerHTML = '';
         
         // Get container dimensions for responsive layout
         const containerWidth = container.clientWidth || 900;
@@ -1515,11 +1504,6 @@ function createDurationViolinPlot(tripData) {
             bottom: 60, 
             left: Math.max(60, width * 0.08) 
         };
-
-        // Define color scale
-        const color = d3.scaleOrdinal()
-            .domain(["member", "casual"])
-            .range(["#4C78A8", "#F58518"]);  // Blue for members, orange for casual
 
         // Create SVG container with responsive dimensions
         const svg = d3.select("#duration-violin")
@@ -1540,6 +1524,11 @@ function createDurationViolinPlot(tripData) {
         const y = d3.scaleLinear()
             .domain([0, 60])
             .range([height - margin.top - margin.bottom, 0]);
+
+        // Define color scale
+        const color = d3.scaleOrdinal()
+            .domain(["member", "casual"])
+            .range(["#4C78A8", "#F58518"]);  // Blue for members, orange for casual
 
         // Create violin plots for each time period
         const timePeriods = ["Morning", "Afternoon", "Evening", "Night"];
@@ -1684,57 +1673,6 @@ function createDurationViolinPlot(tripData) {
                 .text(userType === "member" ? "Member" : "Casual");
         });
 
-        // Add tooltip
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "violin-tooltip")
-            .style("position", "absolute")
-            .style("visibility", "hidden")
-            .style("background", "white")
-            .style("padding", "8px")
-            .style("border", "1px solid #ddd")
-            .style("border-radius", "4px")
-            .style("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            .style("font-size", "12px")
-            .style("pointer-events", "none")
-            .style("z-index", "1000");
-
-        // Add hover interactions
-        svg.selectAll("path.violin")
-            .on("mouseover", function(event, d) {
-                const userType = d3.select(this).classed("member") ? "Member" : "Casual";
-                const period = d3.select(this).datum()[0][0] > 30 ? "Afternoon" : "Morning";
-                const data = tripData[period][userType.toLowerCase()];
-                
-                if (!data) return;
-                
-                const mean = Math.round(d3.mean(data));
-                
-                tooltip.html(`
-                    <strong>${userType} Riders - ${period}</strong><br>
-                    Average Duration: ${mean} minutes<br>
-                    <i>${userType === 'Member' ? 
-                        'Members typically take shorter, more direct trips' : 
-                        'Casual riders often take longer, leisure trips'}</i>
-                `)
-                .style("visibility", "visible")
-                .style("left", `${event.pageX + 10}px`)
-                .style("top", `${event.pageY - 10}px`);
-                
-                d3.select(this)
-                    .attr("stroke-width", 2)
-                    .attr("fill-opacity", 0.9);
-            })
-            .on("mousemove", function(event) {
-                tooltip
-                    .style("left", `${event.pageX + 10}px`)
-                    .style("top", `${event.pageY - 10}px`);
-            })
-            .on("mouseout", function() {
-                tooltip.style("visibility", "hidden");
-                d3.select(this)
-                    .attr("stroke-width", 1)
-                    .attr("fill-opacity", 0.7);
-            });
     } catch (error) {
         console.error("Error creating violin plot:", error);
         const container = document.getElementById("duration-violin");
@@ -1748,6 +1686,19 @@ function createDurationViolinPlot(tripData) {
     }
 }
 
+// Helper functions for kernel density estimation
+function kernelDensityEstimator(kernel, X) {
+    return function(V) {
+        return X.map(x => [x, d3.mean(V, v => kernel(x - v)) || 0]);
+    };
+}
+
+function kernelEpanechnikov(bandwidth) {
+    return function(u) {
+        return Math.abs(u /= bandwidth) <= 1 ? 0.75 * (1 - u * u) / bandwidth : 0;
+    };
+}
+
 // Debounce function to prevent excessive resize calls
 function debounce(func, wait) {
     let timeout;
@@ -1756,17 +1707,6 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(context, args), wait);
     };
-}
-
-// Helper functions for kernel density estimation
-function kernelDensityEstimator(kernel, X) {
-    return function(V) {
-        return X.map(x => [x, d3.mean(V, v => kernel(x - v)) || 0]);
-    };
-}
-
-function kernelEpanechnikov(k) {
-    return v => Math.abs(v /= k) <= 1 ? 0.75 * (1 - v * v) / k : 0;
 }
 
 // Set a flag to track if initialization has been attempted
@@ -1808,75 +1748,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof window.tripData !== 'undefined') {
         console.log("Initializing visualizations immediately");
         try {
-            window.initializeVisualizations(window.tripData);
-        } catch (e) {
-            console.error("Error during initialization:", e);
+            // Check visualization containers before update
+            console.log("Checking visualization containers before update:");
+            const containers = ['hourly-trips', 'trips-heatmap', 'duration-violin', 'daily-usage-altair', 'station-usage-chart'];
+            containers.forEach(id => {
+                const element = document.getElementById(id);
+                console.log(`Container '${id}': ${element ? 'EXISTS' : 'MISSING'}`);
+            });
+
+            // Initialize violin plot if data is available
+            if (window.tripData.violin_data) {
+                console.log("Initializing violin plot with data");
+                createDurationViolinPlot(window.tripData.violin_data);
+            } else {
+                console.warn("No violin plot data available");
+            }
+
+            // Initialize other visualizations...
+        } catch (error) {
+            console.error("Error during visualization initialization:", error);
         }
     } else {
-        console.log("No trip data found, waiting for data to be set");
-        
-        // Add a global handler to initialize when tripData becomes available
-        Object.defineProperty(window, 'tripData', {
-            set: function(newValue) {
-                console.log("Trip data set, initializing visualizations");
-                try {
-                    window.initializeVisualizations(newValue);
-                } catch (e) {
-                    console.error("Error during delayed initialization:", e);
-                }
-            },
-            get: function() {
-                return window._tripData;
-            },
-            configurable: true
-        });
+        console.log("No trip data available, waiting for data load");
     }
-    
-    // Diagnose any missing visualization containers
-    setTimeout(function() {
-        console.log("Performing visualization container diagnostic check");
-        const requiredContainers = [
-            'hourly-trips',
-            'trips-heatmap', 
-            'duration-violin', 
-            'daily-usage-altair', 
-            'station-usage-chart',
-            'stationMap'
-        ];
-        
-        const missingContainers = [];
-        requiredContainers.forEach(id => {
-            // For the map container, check both possible IDs
-            let element = document.getElementById(id);
-            
-            // Special handling for map container which might have either ID
-            if (!element && id === 'stationMap') {
-                element = document.getElementById('station-map');
-                if (element) {
-                    console.log(`DIAGNOSTIC: Map container found with alternative ID 'station-map'`);
-                }
-            }
-            
-            if (!element) {
-                missingContainers.push(id);
-                console.warn(`DIAGNOSTIC: Container '${id}' is missing from the page`);
-            } else {
-                console.log(`DIAGNOSTIC: Container '${id}' exists with dimensions ${element.offsetWidth}x${element.offsetHeight}`);
-                // Check if Plotly is expected for this element
-                if (['hourly-trips', 'trips-heatmap', 'duration-violin'].includes(id)) {
-                    if (!element._fullLayout) {
-                        console.warn(`DIAGNOSTIC: Container '${id}' exists but has no Plotly visualization`);
-                    }
-                }
-            }
-        });
-        
-        if (missingContainers.length === 0) {
-            console.log("DIAGNOSTIC: All visualization containers are present");
-        } else {
-            console.warn(`DIAGNOSTIC: Missing ${missingContainers.length} containers: ${missingContainers.join(', ')}`);
-        }
-    }, 2000); // Wait 2 seconds to allow visualizations to initialize
 });
 
 // Make a window-level function to allow the page to signal it's handling initialization

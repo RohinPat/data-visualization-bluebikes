@@ -1,0 +1,21 @@
+{
+  "name": "data-visualization-bluebikes",
+  "version": "1.0.0",
+  "description": "Bluebikes data visualization project",
+  "main": "app.py",
+  "scripts": {
+    "start": "python app.py",
+    "build": "python generate_static_data.py",
+    "dev": "python app.py"
+  },
+  "dependencies": {
+    "d3": "^7.8.5",
+    "plotly.js": "^2.24.2",
+    "vega": "^5.25.0",
+    "vega-lite": "^5.14.1",
+    "vega-embed": "^6.22.1"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+} 

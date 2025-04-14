@@ -283,13 +283,39 @@ def generate_visualizations(df):
     d3_station_data = generate_d3_station_data(df)
     daily_usage_altair = generate_altair_daily_usage(df)
 
+    # Generate violin plot data
+    violin_data = {
+        'Morning': {'member': [], 'casual': []},
+        'Afternoon': {'member': [], 'casual': []},
+        'Evening': {'member': [], 'casual': []},
+        'Night': {'member': [], 'casual': []}
+    }
+
+    # Group data by time period and user type
+    for _, row in df.iterrows():
+        hour = row['hour']
+        user_type = row['member_casual']
+        duration = row['duration_minutes']
+        
+        # Determine time period
+        if 5 <= hour < 12:
+            period = 'Morning'
+        elif 12 <= hour < 17:
+            period = 'Afternoon'
+        elif 17 <= hour < 22:
+            period = 'Evening'
+        else:
+            period = 'Night'
+            
+        violin_data[period][user_type].append(duration)
+
+    # Return all visualizations
     return {
         'hourly_trips': hourly_trips_dict,
-        'heatmap': json.loads(heatmap.to_json()),
-        'station_popularity': json.loads(station_bar.to_json()),
-        'popular_routes': json.loads(routes_bar.to_json()),
-        'd3_station_data': d3_station_data,
-        'daily_usage_altair': daily_usage_altair
+        'heatmap': heatmap.to_dict(),
+        'station_bar': station_bar.to_dict(),
+        'routes_bar': routes_bar.to_dict(),
+        'violin_data': violin_data
     }
 
 _cached_data = None

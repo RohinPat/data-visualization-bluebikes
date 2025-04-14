@@ -46,22 +46,34 @@ function createHeatmap(data) {
         title: 'Weekly Trip Patterns by Hour',
         xaxis: {
             title: 'Day of Week',
-            tickangle: -45
+            tickangle: -45,
+            range: [0, 6]  // Focus on the 7 days
         },
         yaxis: {
             title: 'Hour of Day',
             tickmode: 'linear',
             tick0: 0,
-            dtick: 1
+            dtick: 1,
+            range: [0, 23]  // Focus on the 24 hours
         },
         margin: {
-            b: 100  // Add more bottom margin for rotated labels
+            b: 100,  // Add more bottom margin for rotated labels
+            t: 50,   // Add top margin
+            l: 50,   // Add left margin
+            r: 50    // Add right margin
         },
         coloraxis: {
             colorscale: 'Viridis',
             colorbar: {
-                title: 'Number of Trips'
+                title: 'Number of Trips',
+                len: 0.8  // Make colorbar shorter
             }
+        },
+        showlegend: true,
+        legend: {
+            x: 1,
+            xanchor: 'right',
+            y: 1
         }
     };
 
@@ -89,21 +101,41 @@ function createDailyUsage(data) {
         x: memberData.map(d => d.day),
         y: memberData.map(d => d.count),
         name: 'Member',
-        type: 'bar'
+        type: 'bar',
+        marker: { color: 'blue' }
     };
 
     const trace2 = {
         x: casualData.map(d => d.day),
         y: casualData.map(d => d.count),
         name: 'Casual',
-        type: 'bar'
+        type: 'bar',
+        marker: { color: 'red' }
     };
 
     const layout = {
         title: 'Daily Usage by User Type',
         barmode: 'group',
-        xaxis: { title: 'Day of Week' },
-        yaxis: { title: 'Number of Trips' }
+        xaxis: { 
+            title: 'Day of Week',
+            range: [-0.5, 6.5]  // Focus on the 7 days
+        },
+        yaxis: { 
+            title: 'Number of Trips',
+            range: [0, Math.max(...memberData.map(d => d.count), ...casualData.map(d => d.count)) * 1.1]  // Add 10% padding
+        },
+        margin: {
+            t: 50,
+            b: 50,
+            l: 50,
+            r: 50
+        },
+        showlegend: true,
+        legend: {
+            x: 1,
+            xanchor: 'right',
+            y: 1
+        }
     };
 
     Plotly.newPlot('daily-usage-altair', [trace1, trace2], layout);
@@ -134,35 +166,66 @@ function createHourlyTrips(data) {
             y: memberWeekday.map(d => d.count),
             name: 'Member (Weekday)',
             type: 'scatter',
-            mode: 'lines+markers'
+            mode: 'lines+markers',
+            line: { color: 'blue' },
+            marker: { color: 'blue' }
         },
         {
             x: casualWeekday.map(d => d.hour),
             y: casualWeekday.map(d => d.count),
             name: 'Casual (Weekday)',
             type: 'scatter',
-            mode: 'lines+markers'
+            mode: 'lines+markers',
+            line: { color: 'red' },
+            marker: { color: 'red' }
         },
         {
             x: memberWeekend.map(d => d.hour),
             y: memberWeekend.map(d => d.count),
             name: 'Member (Weekend)',
             type: 'scatter',
-            mode: 'lines+markers'
+            mode: 'lines+markers',
+            line: { color: 'lightblue', dash: 'dash' },
+            marker: { color: 'lightblue' }
         },
         {
             x: casualWeekend.map(d => d.hour),
             y: casualWeekend.map(d => d.count),
             name: 'Casual (Weekend)',
             type: 'scatter',
-            mode: 'lines+markers'
+            mode: 'lines+markers',
+            line: { color: 'pink', dash: 'dash' },
+            marker: { color: 'pink' }
         }
     ];
 
     const layout = {
         title: 'Hourly Trips by User Type and Day Type',
-        xaxis: { title: 'Hour of Day' },
-        yaxis: { title: 'Number of Trips' }
+        xaxis: { 
+            title: 'Hour of Day',
+            range: [0, 23]  // Focus on the 24 hours
+        },
+        yaxis: { 
+            title: 'Number of Trips',
+            range: [0, Math.max(
+                ...memberWeekday.map(d => d.count),
+                ...casualWeekday.map(d => d.count),
+                ...memberWeekend.map(d => d.count),
+                ...casualWeekend.map(d => d.count)
+            ) * 1.1]  // Add 10% padding
+        },
+        margin: {
+            t: 50,
+            b: 50,
+            l: 50,
+            r: 50
+        },
+        showlegend: true,
+        legend: {
+            x: 1,
+            xanchor: 'right',
+            y: 1
+        }
     };
 
     Plotly.newPlot('hourly-trips', traces, layout);
@@ -220,13 +283,20 @@ function createViolinPlot(data) {
         title: 'Average Trip Duration by Hour and User Type',
         xaxis: { 
             title: 'Hour of Day',
-            tickmode: 'linear',
-            tick0: 0,
-            dtick: 1
+            range: [0, 23]  // Focus on the 24 hours
         },
         yaxis: { 
             title: 'Duration (minutes)',
-            range: [0, 40] // Adjust based on your data range
+            range: [0, Math.max(
+                ...memberData.map(d => d.mean + d.std),
+                ...casualData.map(d => d.mean + d.std)
+            ) * 1.1]  // Add 10% padding
+        },
+        margin: {
+            t: 50,
+            b: 50,
+            l: 50,
+            r: 50
         },
         showlegend: true,
         legend: {

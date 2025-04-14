@@ -16,11 +16,11 @@ def generate_static_data():
         
         # Get the visualization data
         visualization_data = {
-            'hourly_trips': viz_generator._generate_hourly_trips().to_dict(),
-            'daily_usage': viz_generator._generate_daily_usage().to_dict(),
-            'heatmap': viz_generator._generate_heatmap().to_dict(),
-            'station_rankings': viz_generator._generate_station_rankings().to_dict(),
-            'route_rankings': viz_generator._generate_route_rankings().to_dict(),
+            'hourly_trips': viz_generator._generate_hourly_trips(),
+            'daily_usage': viz_generator._generate_daily_usage(),
+            'heatmap': viz_generator._generate_heatmap(),
+            'station_rankings': viz_generator._generate_station_rankings(),
+            'route_rankings': viz_generator._generate_route_rankings(),
             'violin_data': viz_generator._generate_violin_data()
         }
         

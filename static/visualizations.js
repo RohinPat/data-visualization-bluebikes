@@ -350,40 +350,108 @@ function createStationMap(stations) {
         console.error('Station map container not found');
         return;
     }
-    console.log('Found map container:', container);
 
-    // Check if map is already initialized
-    if (container._leaflet_map) {
-        console.log('Map already initialized, skipping');
-        return;
+    // Initialize the map with a higher zoom level and better center point
+    const map = L.map('station-map', {
+        center: [42.3601, -71.0922],  // Centered on MIT area
+        zoom: 15,  // Increased zoom level for better detail
+        maxZoom: 19,
+        minZoom: 12
+    });
+
+    // Add the OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Create a feature group for the stations
+    const stationsLayer = L.featureGroup().addTo(map);
+
+    // Define university areas with proper geographic boundaries
+    const universityAreas = {
+        mit: {
+            center: [42.3601, -71.0922],
+            radius: 1.0  // 1km radius
+        },
+        harvard: {
+            center: [42.3744, -71.1169],
+            radius: 1.0
+        },
+        bu: {
+            center: [42.3505, -71.1054],
+            radius: 1.0
+        },
+        northeastern: {
+            center: [42.3398, -71.0892],
+            radius: 1.0
+        }
+    };
+
+    // Helper function to check if a point is within a circle
+    function isPointInCircle(point, center, radius) {
+        const R = 6371; // Earth's radius in km
+        const dLat = (point[0] - center[0]) * Math.PI / 180;
+        const dLon = (point[1] - center[1]) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(center[0] * Math.PI / 180) * Math.cos(point[0] * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+        return distance <= radius;
     }
 
-    try {
-        // Initialize the map centered on Boston
-        console.log('Initializing Leaflet map...');
-        const map = L.map('station-map', {
-            center: [42.3601, -71.0589],
-            zoom: 13
-        });
-        console.log('Map initialized:', map);
+    // Function to determine which university area a station belongs to
+    function getStationUniversityArea(station) {
+        for (const [univ, area] of Object.entries(universityAreas)) {
+            if (isPointInCircle([station.lat, station.lng], area.center, area.radius)) {
+                console.log(`Station ${station.name} is in ${univ} area`);
+                return univ;
+            }
+        }
+        console.log(`Station ${station.name} is not in any university area`);
+        return 'none';
+    }
 
-        // Add the OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        console.log('Added tile layer');
+    // Function to update markers based on filters
+    function updateMarkers() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][name="universityArea"]');
+        const tripVolumeSlider = document.getElementById('tripVolume');
+        const minTrips = parseInt(tripVolumeSlider.value);
+        const selectedAreas = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
 
-        // Create a feature group for the stations
-        const stationsLayer = L.featureGroup().addTo(map);
-        console.log('Adding stations:', stations.length);
-
-        // Add each station as a circle marker
+        console.log('Selected areas:', selectedAreas);
+        stationsLayer.clearLayers();
+        
+        // Find max trips for scaling
+        const maxTrips = Math.max(...stations.map(s => s.trips));
+        
+        // Calculate center point based on visible stations
+        let visibleStations = [];
         stations.forEach(station => {
+            if (station.trips >= minTrips) {
+                const stationArea = getStationUniversityArea(station);
+                if (selectedAreas.includes(stationArea)) {
+                    visibleStations.push(station);
+                }
+            }
+        });
+
+        // Calculate average coordinates for centering
+        if (visibleStations.length > 0) {
+            const avgLat = visibleStations.reduce((sum, s) => sum + s.lat, 0) / visibleStations.length;
+            const avgLng = visibleStations.reduce((sum, s) => sum + s.lng, 0) / visibleStations.length;
+            map.setView([avgLat, avgLng], 15);
+        }
+        
+        // Add markers
+        visibleStations.forEach(station => {
             const marker = L.circleMarker([station.lat, station.lng], {
-                radius: Math.sqrt(station.trips) * 0.5,
+                radius: Math.sqrt(station.trips) * 1.2,
                 fillColor: '#1f77b4',
-                color: '#000',
+                color: '#1f77b4',
                 weight: 1,
                 opacity: 1,
                 fillOpacity: 0.8
@@ -392,80 +460,76 @@ function createStationMap(stations) {
             marker.bindPopup(`
                 <strong>${station.name}</strong><br>
                 Trips: ${station.trips}<br>
-                Location: (${station.lat.toFixed(4)}, ${station.lng.toFixed(4)})
+                Location: (${station.lat.toFixed(4)}, ${station.lng.toFixed(4)})<br>
+                Area: ${getStationUniversityArea(station) === 'none' ? 'Other' : getStationUniversityArea(station).toUpperCase()}
             `);
 
             marker.addTo(stationsLayer);
         });
 
-        // Fit the map to show all stations
-        map.fitBounds(stationsLayer.getBounds());
-        console.log('Map bounds set');
+        // Create or update legend
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function() {
+            const div = L.DomUtil.create('div', 'info legend');
+            const tripValues = [0, 50, 100, 200, maxTrips];
+            const labels = [];
+            
+            // Add title
+            div.innerHTML = '<h4>Number of Trips</h4>';
+            
+            // Add legend entries
+            for (let i = 0; i < tripValues.length; i++) {
+                const radius = Math.sqrt(tripValues[i]) * 1.2;
+                labels.push(
+                    `<div class="legend-entry">
+                        <span class="legend-circle" style="width:${radius * 2}px; height:${radius * 2}px; background-color:#1f77b4;"></span>
+                        <span class="legend-label">${tripValues[i]}</span>
+                    </div>`
+                );
+            }
+            
+            div.innerHTML += labels.join('');
+            return div;
+        };
+        
+        // Remove existing legend if it exists
+        if (map.legend) {
+            map.removeControl(map.legend);
+        }
+        map.legend = legend;
+        legend.addTo(map);
 
-        // Add event listeners for filters
-        setupMapFilters(stations, stationsLayer, map);
-        console.log('Map setup complete');
-
-    } catch (error) {
-        console.error('Error creating map:', error);
+        // Update the map bounds to show all visible markers
+        if (stationsLayer.getLayers().length > 0) {
+            map.fitBounds(stationsLayer.getBounds());
+        }
     }
-}
 
-// Function to set up map filters
-function setupMapFilters(stations, stationsLayer, map) {
+    // Add event listeners for filters
     const checkboxes = document.querySelectorAll('input[type="checkbox"][name="universityArea"]');
     const tripVolumeSlider = document.getElementById('tripVolume');
     const tripVolumeValue = document.getElementById('tripVolumeValue');
 
-    function updateMarkers() {
-        const minTrips = parseInt(tripVolumeSlider.value);
-        const selectedAreas = Array.from(checkboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value);
+    // Set slider max value based on data
+    const maxTrips = Math.max(...stations.map(s => s.trips));
+    tripVolumeSlider.max = maxTrips - 1; // Set max to just under the maximum trips
+    tripVolumeSlider.value = 0;
+    tripVolumeValue.textContent = '0';
 
-        stationsLayer.clearLayers();
-        
-        stations.forEach(station => {
-            if (station.trips >= minTrips) {
-                const isUniversityArea = station.name.toLowerCase().includes('mit') || 
-                                       station.name.toLowerCase().includes('harvard') ||
-                                       station.name.toLowerCase().includes('bu') ||
-                                       station.name.toLowerCase().includes('northeastern');
-                
-                const shouldShow = selectedAreas.includes('none') ? !isUniversityArea :
-                                 selectedAreas.some(area => station.name.toLowerCase().includes(area));
-
-                if (shouldShow) {
-                    const marker = L.circleMarker([station.lat, station.lng], {
-                        radius: Math.sqrt(station.trips) * 0.5,
-                        fillColor: '#1f77b4',
-                        color: '#000',
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    });
-
-                    marker.bindPopup(`
-                        <strong>${station.name}</strong><br>
-                        Trips: ${station.trips}<br>
-                        Location: (${station.lat.toFixed(4)}, ${station.lng.toFixed(4)})
-                    `);
-
-                    marker.addTo(stationsLayer);
-                }
-            }
-        });
-    }
-
-    // Add event listeners
     checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateMarkers);
+        checkbox.addEventListener('change', function() {
+            console.log('Checkbox changed:', this.value, this.checked);
+            updateMarkers();
+        });
     });
 
     tripVolumeSlider.addEventListener('input', function() {
         tripVolumeValue.textContent = this.value;
         updateMarkers();
     });
+
+    // Initial update
+    updateMarkers();
 }
 
 // Function to initialize all visualizations

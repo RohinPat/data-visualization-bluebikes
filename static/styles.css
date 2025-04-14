@@ -301,3 +301,33 @@ footer {
 section > .visualization-container:not(:last-child) {
   margin-bottom: 4rem;
 }
+
+.info.legend {
+  background: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.info.legend h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+.legend-entry {
+  display: flex;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.legend-circle {
+  display: inline-block;
+  border-radius: 50%;
+  margin-right: 8px;
+  opacity: 0.8;
+}
+
+.legend-label {
+  font-size: 12px;
+}

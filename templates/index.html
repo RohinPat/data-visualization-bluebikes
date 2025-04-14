@@ -39,20 +39,24 @@
             <p>The map and charts below show how BlueBikes stations are used across different university areas in Boston and Cambridge.</p>
             
             <div class="visualization-container">
-                <div class="controls">
-                    <h4>Filter by University Area</h4>
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" name="universityArea" value="mit"> MIT</label>
-                        <label><input type="checkbox" name="universityArea" value="harvard"> Harvard</label>
-                        <label><input type="checkbox" name="universityArea" value="bu"> Boston University</label>
-                        <label><input type="checkbox" name="universityArea" value="neu"> Northeastern</label>
-                        <label><input type="checkbox" name="universityArea" value="none"> Other Stations</label>
+                <div class="map-section">
+                    <div class="controls">
+                        <h4>Filter by University Area</h4>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="universityArea" value="mit" checked> MIT</label>
+                            <label><input type="checkbox" name="universityArea" value="harvard" checked> Harvard</label>
+                            <label><input type="checkbox" name="universityArea" value="bu" checked> Boston University</label>
+                            <label><input type="checkbox" name="universityArea" value="northeastern" checked> Northeastern</label>
+                            <label><input type="checkbox" name="universityArea" value="none" checked> Other Stations</label>
+                        </div>
+                        <h4>Minimum Trip Volume</h4>
+                        <div class="slider-container">
+                            <input type="range" id="tripVolume" min="0" max="214" value="0" step="10">
+                            <span id="tripVolumeValue">0</span> trips
+                        </div>
                     </div>
-                    <h4>Minimum Trip Volume</h4>
-                    <input type="range" id="tripVolume" min="0" max="214" value="0" step="10">
-                    <span id="tripVolumeValue">0</span> trips
+                    <div id="station-map"></div>
                 </div>
-                <div id="station-map" style="height: 500px;"></div>
                 <div class="visualization-description">
                     <h3>Station Distribution and University Impact</h3>
                     <p>The map reveals a clear concentration of high-volume stations (larger circles) around university areas, particularly MIT and Harvard. These stations consistently show 2-3 times more activity than stations in non-university areas. MIT's stations along Mass Ave and Vassar Street are among the busiest in the system, highlighting the success of university partnerships and student discount programs.</p>

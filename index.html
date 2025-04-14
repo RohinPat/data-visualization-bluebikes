@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluebikes Data Visualization</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.30.1.min.js"></script>
+    
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .visualization-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1, h2 {
+            color: #333;
+        }
+        
+        #station-map {
+            height: 600px;
+            width: 100%;
+            border-radius: 4px;
+        }
+        
+        .filters {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        
+        .filter-group label {
+            margin-right: 15px;
+        }
+        
+        .chart-container {
+            height: 400px;
+            margin-bottom: 30px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bluebikes Data Visualization</h1>
+        
+        <!-- Station Map Section -->
+        <div class="visualization-section">
+            <h2>Station Map</h2>
+            <div class="filters">
+                <div class="filter-group">
+                    <h3>University Areas</h3>
+                    <label>
+                        <input type="checkbox" name="universityArea" value="mit"> MIT
+                    </label>
+                    <label>
+                        <input type="checkbox" name="universityArea" value="harvard"> Harvard
+                    </label>
+                    <label>
+                        <input type="checkbox" name="universityArea" value="bu"> BU
+                    </label>
+                    <label>
+                        <input type="checkbox" name="universityArea" value="northeastern"> Northeastern
+                    </label>
+                    <label>
+                        <input type="checkbox" name="universityArea" value="none"> Non-University Areas
+                    </label>
+                </div>
+                <div class="filter-group">
+                    <h3>Minimum Trip Volume</h3>
+                    <input type="range" id="tripVolume" min="0" max="1000" value="0" step="50">
+                    <span id="tripVolumeValue">0</span> trips
+                </div>
+            </div>
+            <div id="station-map"></div>
+        </div>
+        
+        <!-- Charts Grid -->
+        <div class="grid">
+            <!-- Daily Usage Chart -->
+            <div class="visualization-section">
+                <h2>Daily Usage Pattern</h2>
+                <div id="daily-usage-altair" class="chart-container"></div>
+            </div>
+            
+            <!-- Hourly Trips Chart -->
+            <div class="visualization-section">
+                <h2>Hourly Trip Distribution</h2>
+                <div id="hourly-trips" class="chart-container"></div>
+            </div>
+            
+            <!-- Trip Duration Violin Plot -->
+            <div class="visualization-section">
+                <h2>Trip Duration Distribution</h2>
+                <div id="duration-violin" class="chart-container"></div>
+            </div>
+            
+            <!-- Station Usage Chart -->
+            <div class="visualization-section">
+                <h2>Top Stations by Usage</h2>
+                <div id="station-usage-chart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custom JavaScript -->
+    <script src="visualizations.js"></script>
+</body>
+</html> 

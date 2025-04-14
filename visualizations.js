@@ -121,8 +121,8 @@ function setupMapFilters(stations, stationsLayer, map) {
 // Function to load visualization data from the server
 async function loadVisualizationData() {
     try {
-        // Load data from the local data.json file
-        const response = await fetch('./data.json');
+        // Load data from the docs/data.json file
+        const response = await fetch('docs/data.json');
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -132,13 +132,41 @@ async function loadVisualizationData() {
         // Create the station map
         createStationMap(stations);
 
-        // Transform station data into visualization format for other charts
+        // Sort stations by number of trips for rankings
+        const sortedStations = [...stations].sort((a, b) => b.trips - a.trips);
+        const top10Stations = sortedStations.slice(0, 10);
+
+        // Calculate daily distribution (assuming trips field contains daily breakdown)
+        const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const dailyTotals = daysOfWeek.map(day => 
+            stations.reduce((sum, station) => sum + (station.daily_trips?.[day.toLowerCase()] || 0), 0)
+        );
+
+        // Calculate hourly distribution
+        const hourlyTotals = Array(24).fill(0);
+        stations.forEach(station => {
+            if (station.hourly_trips) {
+                station.hourly_trips.forEach((trips, hour) => {
+                    hourlyTotals[hour] += trips;
+                });
+            }
+        });
+
+        // Calculate trip durations for violin plot
+        const tripDurations = stations.reduce((durations, station) => {
+            if (station.trip_durations) {
+                durations.push(...station.trip_durations);
+            }
+            return durations;
+        }, []);
+
+        // Transform station data into visualization format
         const data = {
             daily_usage: {
                 data: [{
                     type: 'bar',
-                    x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    y: [1200, 1300, 1400, 1500, 1600, 1000, 800],
+                    x: daysOfWeek,
+                    y: dailyTotals,
                     marker: { color: 'rgb(55, 83, 109)' }
                 }],
                 layout: {
@@ -150,42 +178,54 @@ async function loadVisualizationData() {
             hourly_trips: {
                 data: [{
                     type: 'scatter',
-                    mode: 'lines',
+                    mode: 'lines+markers',
                     x: Array.from({length: 24}, (_, i) => i),
-                    y: Array.from({length: 24}, (_, i) => Math.sin(i/24 * Math.PI * 2) * 100 + 500),
+                    y: hourlyTotals,
                     line: { color: 'rgb(55, 83, 109)' }
                 }],
                 layout: {
                     title: 'Hourly Trip Distribution',
-                    xaxis: { title: 'Hour of Day' },
+                    xaxis: { 
+                        title: 'Hour of Day',
+                        tickmode: 'array',
+                        ticktext: Array.from({length: 24}, (_, i) => `${i}:00`),
+                        tickvals: Array.from({length: 24}, (_, i) => i)
+                    },
                     yaxis: { title: 'Number of Trips' }
                 }
             },
             violin_data: {
                 data: [{
                     type: 'violin',
-                    y: Array.from({length: 1000}, () => Math.random() * 60),
+                    y: tripDurations.length > 0 ? tripDurations : stations.map(s => s.trips),
                     box: { visible: true },
                     line: { color: 'black' },
                     fillcolor: 'rgb(55, 83, 109)',
-                    opacity: 0.6
+                    opacity: 0.6,
+                    name: 'Trip Distribution'
                 }],
                 layout: {
-                    title: 'Trip Duration Distribution',
-                    yaxis: { title: 'Duration (minutes)' }
+                    title: 'Trip Distribution',
+                    yaxis: { title: 'Number of Trips' }
                 }
             },
             station_rankings: {
                 data: [{
                     type: 'bar',
-                    x: stations.slice(0, 10).map(s => s.name),
-                    y: stations.slice(0, 10).map(s => s.trips),
+                    x: top10Stations.map(s => s.name.length > 20 ? s.name.substring(0, 17) + '...' : s.name),
+                    y: top10Stations.map(s => s.trips),
                     marker: { color: 'rgb(55, 83, 109)' }
                 }],
                 layout: {
                     title: 'Top 10 Most Used Stations',
-                    xaxis: { title: 'Station' },
-                    yaxis: { title: 'Number of Trips' }
+                    xaxis: { 
+                        title: 'Station',
+                        tickangle: -45
+                    },
+                    yaxis: { title: 'Number of Trips' },
+                    margin: {
+                        b: 150  // Increase bottom margin for rotated labels
+                    }
                 }
             }
         };
@@ -289,9 +329,6 @@ async function initializeVisualizations() {
             console.error('Failed to load visualization data');
             return;
         }
-
-        // Create station map
-        createStationMap(data.station_data);
 
         // Create daily usage chart
         const dailyUsageChart = document.getElementById('daily-usage-altair');

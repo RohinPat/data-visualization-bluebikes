@@ -301,3 +301,76 @@ footer {
 section > .visualization-container:not(:last-child) {
   margin-bottom: 4rem;
 }
+
+/* Map styles */
+.map-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.controls {
+    background: #f5f5f5;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 0.5rem 0;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.slider-container {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#station-map {
+    height: 500px;
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+input[type="range"] {
+    flex: 1;
+}
+
+input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Visualization container styles */
+.visualization-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 2rem 0;
+    overflow: hidden;
+}
+
+.visualization-description {
+    padding: 1rem;
+    background: #f9f9f9;
+    border-top: 1px solid #eee;
+}
+
+.visualization-description h3 {
+    margin-top: 0;
+    color: #333;
+}

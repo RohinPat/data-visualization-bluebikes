@@ -21,18 +21,34 @@ def convert_to_python_types(obj):
     return obj
 
 def process_station_data(df):
-    # Group by station to get total trips
-    station_stats = df.groupby(['start_station_name', 'start_lat', 'start_lng']).size().reset_index(name='total_trips')
+    # Get starting trip counts
+    start_stats = df.groupby(['start_station_name', 'start_lat', 'start_lng']).size().reset_index(name='start_trips')
+    
+    # Get ending trip counts
+    end_stats = df.groupby(['end_station_name', 'end_lat', 'end_lng']).size().reset_index(name='end_trips')
+    
+    # Merge start and end stats
+    station_stats = start_stats.merge(
+        end_stats,
+        left_on=['start_station_name', 'start_lat', 'start_lng'],
+        right_on=['end_station_name', 'end_lat', 'end_lng'],
+        how='outer'
+    ).fillna(0)
+    
+    # Calculate total trips and clean up columns
+    station_stats['total_trips'] = station_stats['start_trips'] + station_stats['end_trips']
     station_stats = station_stats.sort_values('total_trips', ascending=False)
     
     # Convert to list of dictionaries
     stations = []
     for _, row in station_stats.iterrows():
         stations.append({
-            'name': row['start_station_name'],
-            'lat': float(row['start_lat']),
-            'lng': float(row['start_lng']),
-            'trips': int(row['total_trips'])
+            'name': row['start_station_name'] or row['end_station_name'],
+            'lat': float(row['start_lat'] or row['end_lat']),
+            'lng': float(row['start_lng'] or row['end_lng']),
+            'trips': int(row['total_trips']),
+            'start_trips': int(row['start_trips']),
+            'end_trips': int(row['end_trips'])
         })
     
     return stations

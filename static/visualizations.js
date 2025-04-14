@@ -1,6 +1,58 @@
 // Global flag to track initialization state
 let isInitialized = false;
 
+// Define university areas with proper geographic boundaries
+const universityAreas = {
+    mit: {
+        center: [42.3601, -71.0922],
+        radius: 1.0  // 1km radius
+    },
+    harvard: {
+        center: [42.3744, -71.1169],
+        radius: 1.0
+    },
+    bu: {
+        center: [42.3505, -71.1054],
+        radius: 1.0
+    },
+    northeastern: {
+        center: [42.3405, -71.0867],  // Adjusted to center of Northeastern campus
+        radius: 1.5  // Increased radius to capture more surrounding stations
+    }
+};
+
+// Define university colors
+const universityColors = {
+    mit: '#8A8B8C',       // MIT's secondary gray
+    harvard: '#1E1B84',   // Harvard's secondary blue
+    bu: '#000000',        // BU Black
+    northeastern: '#D41B2C', // Northeastern Red (keeping this one)
+    none: '#6BAED6'       // Light blue for other stations
+};
+
+// Helper function to check if a point is within a circle
+function isPointInCircle(point, center, radius) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (point[0] - center[0]) * Math.PI / 180;
+    const dLon = (point[1] - center[1]) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(center[0] * Math.PI / 180) * Math.cos(point[0] * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    return distance <= radius;
+}
+
+// Function to determine which university area a station belongs to
+function getStationUniversityArea(station) {
+    for (const [univ, area] of Object.entries(universityAreas)) {
+        if (isPointInCircle([station.lat, station.lng], area.center, area.radius)) {
+            return univ;
+        }
+    }
+    return 'none';
+}
+
 // Function to load visualization data
 async function loadVisualizationData() {
     try {
@@ -322,24 +374,112 @@ function createStationUsage(data) {
         return;
     }
 
-    // Process data for station usage
-    const topStations = data
-        .sort((a, b) => b.trips - a.trips)
-        .slice(0, 10);
+    // Get dropdown elements
+    const viewSelect = document.getElementById('stationView');
+    const areaSelect = document.getElementById('universityFilter');
 
-    const trace = {
-        x: topStations.map(s => s.name),
-        y: topStations.map(s => s.trips),
-        type: 'bar'
-    };
+    function updateChart() {
+        // Filter data based on selected area
+        let filteredData = [...data];
+        const selectedArea = areaSelect.value;
+        if (selectedArea !== 'all') {
+            filteredData = data.filter(station => {
+                const stationArea = getStationUniversityArea(station);
+                return stationArea === selectedArea;
+            });
+        }
 
-    const layout = {
-        title: 'Top 10 Stations by Trip Volume',
-        xaxis: { title: 'Station Name', tickangle: 45 },
-        yaxis: { title: 'Number of Trips' }
-    };
+        // Process data based on view type
+        const viewType = viewSelect.value;
+        const processedData = filteredData.map(station => ({
+            name: station.name,
+            trips: viewType === 'starts' ? station.start_trips : 
+                   viewType === 'ends' ? station.end_trips : 
+                   station.trips,
+            area: getStationUniversityArea(station)
+        }));
 
-    Plotly.newPlot('station-usage-chart', [trace], layout);
+        // Sort and get top 10
+        const topStations = processedData
+            .sort((a, b) => b.trips - a.trips)
+            .slice(0, 10);
+
+        // Create a single trace with all stations
+        const trace = {
+            x: topStations.map(s => s.name),
+            y: topStations.map(s => s.trips),
+            type: 'bar',
+            marker: {
+                color: topStations.map(s => universityColors[s.area])
+            },
+            showlegend: false,  // Hide this trace from the legend
+            hovertemplate: '%{y} trips<extra></extra>'  // Clean up hover text
+        };
+
+        // Create separate traces for legend only
+        const areas = ['mit', 'harvard', 'bu', 'northeastern', 'none'];
+        const legendTraces = areas.map(area => ({
+            name: area === 'none' ? 'Other' : area.toUpperCase(),
+            x: [topStations[0].name],  // Use first station name as dummy x value
+            y: [0],  // Hide the bar by setting y to 0
+            type: 'bar',
+            marker: {
+                color: universityColors[area]
+            },
+            showlegend: true,
+            hoverinfo: 'none',
+            visible: true
+        }));
+
+        const layout = {
+            title: {
+                text: 'Top 10 Stations by Trip Volume',
+                font: {
+                    size: 20
+                },
+                y: 0.95  // Move title up slightly
+            },
+            xaxis: {
+                title: 'Station Name',
+                tickangle: 45,
+                tickfont: {
+                    size: 10
+                },
+                automargin: true
+            },
+            yaxis: {
+                title: 'Number of Trips'
+            },
+            margin: {
+                l: 60,
+                r: 20,
+                t: 100,  // Increased top margin for legend
+                b: 120
+            },
+            showlegend: true,
+            legend: {
+                title: {
+                    text: 'University Area'
+                },
+                orientation: 'h',
+                yanchor: 'bottom',
+                y: 1.15,  // Moved legend up
+                xanchor: 'center',
+                x: 0.5,   // Centered horizontally
+                traceorder: 'normal'
+            },
+            barmode: 'stack'
+        };
+
+        Plotly.newPlot('station-usage-chart', [trace, ...legendTraces], layout);
+    }
+
+    // Add event listeners to dropdowns
+    viewSelect.addEventListener('change', updateChart);
+    areaSelect.addEventListener('change', updateChart);
+
+    // Initial chart render
+    updateChart();
 }
 
 // Function to create the station map visualization
@@ -367,51 +507,6 @@ function createStationMap(stations) {
 
     // Create a feature group for the stations
     const stationsLayer = L.featureGroup().addTo(map);
-
-    // Define university areas with proper geographic boundaries
-    const universityAreas = {
-        mit: {
-            center: [42.3601, -71.0922],
-            radius: 1.0  // 1km radius
-        },
-        harvard: {
-            center: [42.3744, -71.1169],
-            radius: 1.0
-        },
-        bu: {
-            center: [42.3505, -71.1054],
-            radius: 1.0
-        },
-        northeastern: {
-            center: [42.3398, -71.0892],
-            radius: 1.0
-        }
-    };
-
-    // Helper function to check if a point is within a circle
-    function isPointInCircle(point, center, radius) {
-        const R = 6371; // Earth's radius in km
-        const dLat = (point[0] - center[0]) * Math.PI / 180;
-        const dLon = (point[1] - center[1]) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(center[0] * Math.PI / 180) * Math.cos(point[0] * Math.PI / 180) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = R * c;
-        return distance <= radius;
-    }
-
-    // Function to determine which university area a station belongs to
-    function getStationUniversityArea(station) {
-        for (const [univ, area] of Object.entries(universityAreas)) {
-            if (isPointInCircle([station.lat, station.lng], area.center, area.radius)) {
-                console.log(`Station ${station.name} is in ${univ} area`);
-                return univ;
-            }
-        }
-        console.log(`Station ${station.name} is not in any university area`);
-        return 'none';
-    }
 
     // Function to update markers based on filters
     function updateMarkers() {

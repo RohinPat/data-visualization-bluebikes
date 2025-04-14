@@ -14,15 +14,11 @@ def generate_static_data():
         # Generate visualizations
         viz_generator = generate_visualizations(data_processor)
         
-        # Get the visualization data
-        visualization_data = {
-            'hourly_trips': viz_generator._generate_hourly_trips(),
-            'daily_usage': viz_generator._generate_daily_usage(),
-            'heatmap': viz_generator._generate_heatmap(),
-            'station_rankings': viz_generator._generate_station_rankings(),
-            'route_rankings': viz_generator._generate_route_rankings(),
-            'violin_data': viz_generator._generate_violin_data()
-        }
+        # Get all visualizations using the cached version
+        visualization_data = viz_generator.get_all_visualizations()
+        
+        # Remove station_data as it's written to a separate file
+        visualization_data.pop('station_data', None)
         
         # Write to static/data.js
         with open('static/data.js', 'w') as f:

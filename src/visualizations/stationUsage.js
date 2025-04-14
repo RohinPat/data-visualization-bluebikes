@@ -1,32 +1,48 @@
 export function createStationUsageChart(data, containerId) {
-    const stationData = processStationData(data);
-    
-    const layout = {
-        title: 'Top 15 Stations by Total Trips',
-        height: 600,
-        margin: { t: 50, r: 30, b: 80, l: 250 },
-        xaxis: {
-            title: 'Number of Trips'
-        },
-        yaxis: {
-            title: 'Station Name',
-            autorange: 'reversed'
-        },
-        showlegend: false
-    };
-
-    Plotly.newPlot(containerId, [{
-        x: stationData.trips,
-        y: stationData.names,
-        type: 'bar',
-        orientation: 'h',
-        marker: {
-            color: '#4C78A8'
+    try {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error(`Container ${containerId} not found`);
+            return;
         }
-    }], layout, {
-        responsive: true,
-        displayModeBar: false
-    });
+
+        const stationData = processStationData(data);
+        
+        const layout = {
+            title: 'Top 15 Stations by Total Trips',
+            height: 600,
+            margin: { t: 50, r: 30, b: 80, l: 250 },
+            xaxis: {
+                title: 'Number of Trips',
+                tickformat: ',d'  // Format numbers with thousands separator
+            },
+            yaxis: {
+                title: 'Station Name',
+                autorange: 'reversed'
+            },
+            showlegend: false,
+            font: {
+                family: 'Arial, sans-serif'
+            }
+        };
+
+        Plotly.newPlot(containerId, [{
+            x: stationData.trips,
+            y: stationData.names,
+            type: 'bar',
+            orientation: 'h',
+            marker: {
+                color: '#4C78A8',
+                opacity: 0.8
+            },
+            hovertemplate: '<b>%{y}</b><br>Trips: %{x:,}<extra></extra>'
+        }], layout, {
+            responsive: true,
+            displayModeBar: false
+        });
+    } catch (error) {
+        console.error('Error creating station usage chart:', error);
+    }
 }
 
 function processStationData(data) {

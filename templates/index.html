@@ -151,67 +151,6 @@
         <p>Data visualization project for DS4200 - Information Visualization</p>
     </footer>
 
-    <script src="{{ url_for('static', filename='data.js') }}"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="{{ url_for('static', filename='d3_visualizations.js') }}"></script>
-    <script>
-        // Create a fallback visualization data if data.js doesn't load properly
-        if (typeof visualizationData === 'undefined') {
-            console.log("Creating fallback visualization data");
-            window.visualizationData = {
-                d3_station_data: []
-            };
-        }
-        
-        if (typeof window.notifyPageInitialization === 'function') {
-            window.notifyPageInitialization();
-            console.log("Notified script.js that page is handling initialization");
-        }
-        
-        // Initialize visualizations when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("Starting custom initialization");
-            
-            // Create a maximum wait time and check interval
-            const maxWaitTime = 5000; // 5 seconds
-            const startTime = Date.now();
-            const checkInterval = 200; // 200ms
-            
-            function attemptInitialization() {
-                if (typeof window.initializeVisualizations === 'function') {
-                    console.log("Found initialization function, proceeding");
-                    
-                    // Ensure we have at least empty data to work with
-                    if (typeof visualizationData === 'undefined') {
-                        console.log("No visualization data found, creating empty placeholder");
-                        window.visualizationData = { d3_station_data: [] };
-                    }
-                    
-                    console.log("Initializing with available data");
-                    window.initializeVisualizations(window.visualizationData || {});
-                    return true;
-                }
-                
-                // Check if we've exceeded the maximum wait time
-                if (Date.now() - startTime > maxWaitTime) {
-                    console.error("Timed out waiting for initialization function");
-                    return true;
-                }
-                
-                console.log("Waiting for initialization function...");
-                return false;
-            }
-            
-            // Try immediately first
-            if (!attemptInitialization()) {
-                // If not successful, set up a polling mechanism
-                const initializationTimer = setInterval(function() {
-                    if (attemptInitialization()) {
-                        clearInterval(initializationTimer);
-                    }
-                }, checkInterval);
-            }
-        });
-    </script>
+    <script src="{{ url_for('static', filename='visualizations.js') }}"></script>
 </body>
 </html> 

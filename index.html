@@ -10,6 +10,9 @@
     
     <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Load visualization data -->
+    <script src="static/data.js"></script>
 </head>
 <body>
     <header>
@@ -24,13 +27,28 @@
         </section>
 
         <section class="visualization-section">
-            <h2>Weekly Patterns</h2>
+            <h2>Daily Usage Patterns</h2>
+            <div id="daily-usage" class="visualization"></div>
+        </section>
+
+        <section class="visualization-section">
+            <h2>Weekly Trip Patterns</h2>
             <div id="trips-heatmap" class="visualization"></div>
         </section>
 
         <section class="visualization-section">
-            <h2>Station Rankings</h2>
+            <h2>Trip Duration Patterns</h2>
+            <div id="duration-violin" class="visualization"></div>
+        </section>
+
+        <section class="visualization-section">
+            <h2>Station Usage</h2>
             <div id="station-usage" class="visualization"></div>
+        </section>
+
+        <section class="visualization-section">
+            <h2>Station Map</h2>
+            <div id="station-map" style="height: 500px;"></div>
         </section>
     </main>
 
@@ -38,16 +56,22 @@
         import { createHourlyTripsChart } from './src/visualizations/hourlyTrips.js';
         import { createTripHeatmap } from './src/visualizations/tripHeatmap.js';
         import { createStationUsageChart } from './src/visualizations/stationUsage.js';
+        import { createDurationViolin } from './src/visualizations/durationViolin.js';
 
-        async function initialize() {
+        function initialize() {
             try {
-                const response = await fetch('src/data/202501-bluebikes-tripdata.csv');
-                const csvText = await response.text();
-                const data = parseCSV(csvText);
+                // Create visualizations using the globally loaded visualizationData
+                if (typeof visualizationData === 'undefined') {
+                    throw new Error('Visualization data not loaded');
+                }
                 
-                createHourlyTripsChart(data, 'hourly-trips');
-                createTripHeatmap(data, 'trips-heatmap');
-                createStationUsageChart(data, 'station-usage');
+                // Create visualizations
+                createHourlyTripsChart(visualizationData.hourly_trips, 'hourly-trips');
+                createTripHeatmap(visualizationData.heatmap, 'trips-heatmap');
+                createDurationViolin(visualizationData.violin_data, 'duration-violin');
+                createStationUsageChart(visualizationData.station_rankings, 'station-usage');
+
+                console.log('All visualizations initialized successfully');
             } catch (error) {
                 console.error('Error:', error);
                 document.querySelectorAll('.visualization').forEach(viz => {
@@ -56,21 +80,8 @@
             }
         }
 
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',');
-            return lines.slice(1)
-                .filter(line => line.trim())
-                .map(line => {
-                    const values = line.split(',');
-                    return headers.reduce((obj, header, i) => {
-                        obj[header.trim()] = values[i];
-                        return obj;
-                    }, {});
-                });
-        }
-
-        initialize();
+        // Initialize when DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 </html> 

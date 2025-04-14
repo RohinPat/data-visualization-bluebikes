@@ -118,9 +118,9 @@ window.initializeVisualizations = function(data) {
             fetch('static/data.json')
                 .then(response => response.json())
                 .then(fullData => {
-                    console.log(`Loaded ${fullData.d3_station_data ? fullData.d3_station_data.length : 0} stations from data.json`);
-                    // Merge the full station data with existing data
-                    data.d3_station_data = fullData.d3_station_data || [];
+                    console.log(`Loaded ${Array.isArray(fullData) ? fullData.length : 0} stations from data.json`);
+                    // If fullData is an array, wrap it in d3_station_data property
+                    data.d3_station_data = Array.isArray(fullData) ? fullData : (fullData.d3_station_data || []);
                     // Initialize with the complete data rather than calling initializeVisualizations again
                     initializeWithAvailableData(data);
                 })

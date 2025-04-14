@@ -112,4 +112,5 @@ class DataProcessor:
         station_data['trips'] = station_data['trips'].astype(int)
         station_data['name'] = station_data['name'].apply(self.clean_station_name)
         
-        return station_data.to_dict('records') 
+        # Convert to list of dictionaries using the newer pandas API
+        return station_data.to_dict(orient='records') 

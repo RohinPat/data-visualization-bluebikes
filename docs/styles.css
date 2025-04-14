@@ -374,3 +374,32 @@ input[type="checkbox"] {
     margin-top: 0;
     color: #333;
 }
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background-color: #f5f5f5;
+  border-radius: 5px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.radio-group label:hover {
+  background-color: #e9ecef;
+}
+
+.radio-group input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}

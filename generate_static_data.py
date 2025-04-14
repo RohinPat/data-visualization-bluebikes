@@ -59,17 +59,38 @@ def process_trip_durations(df):
     df['ended_at'] = pd.to_datetime(df['ended_at'])
     df['duration_minutes'] = (df['ended_at'] - df['started_at']).dt.total_seconds() / 60
     
+    # Remove trips that are likely data errors
+    # - Trips longer than 24 hours
+    # - Trips shorter than 1 minute (likely system errors)
+    df = df[(df['duration_minutes'] <= 1440) & (df['duration_minutes'] >= 1)]
+    
     # Group by user type and hour
     df['hour'] = df['started_at'].dt.hour
-    duration_stats = df.groupby(['member_casual', 'hour'])['duration_minutes'].agg(['mean', 'std']).reset_index()
     
-    # Fill NaN values with 0 for mean and std
-    duration_stats['mean'] = duration_stats['mean'].fillna(0)
-    duration_stats['std'] = duration_stats['std'].fillna(0)
+    # Calculate statistics
+    duration_stats = df.groupby(['member_casual', 'hour'])['duration_minutes'].agg([
+        'mean',
+        'std',
+        'count',
+        'median',
+        'min',
+        'max',
+        lambda x: x.quantile(0.25),  # Q1
+        lambda x: x.quantile(0.75)   # Q3
+    ]).reset_index()
+    
+    # Rename the lambda columns
+    duration_stats.columns = ['member_casual', 'hour', 'mean', 'std', 'count', 'median', 'min', 'max', 'q1', 'q3']
+    
+    # Only include hours with sufficient data points (at least 10 trips)
+    duration_stats = duration_stats[duration_stats['count'] >= 10]
+    
+    # Calculate the interquartile range (IQR)
+    duration_stats['iqr'] = duration_stats['q3'] - duration_stats['q1']
     
     # Convert to Python types
-    duration_stats['mean'] = duration_stats['mean'].astype(float)
-    duration_stats['std'] = duration_stats['std'].astype(float)
+    for col in ['mean', 'std', 'median', 'min', 'max', 'q1', 'q3', 'iqr']:
+        duration_stats[col] = duration_stats[col].astype(float)
     
     return duration_stats.to_dict('records')
 

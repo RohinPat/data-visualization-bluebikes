@@ -97,43 +97,131 @@ function createHeatmap(data) {
     }
 
     // Get the heatmap data from the visualization data
-    const heatmapData = visualizationData.heatmap.data[0];
-    const layout = {
-        title: 'Weekly Trip Patterns by Hour',
-        xaxis: {
-            title: 'Hour of Day',
-            tickmode: 'linear',
-            tick0: 0,
-            dtick: 1,
-            range: [0, 23]  // Focus on the 24 hours
-        },
-        yaxis: {
-            title: 'Day of Week',
-            tickangle: 0,
-            range: [-0.5, 6.5]  // Focus on the 7 days
-        },
-        margin: {
-            b: 50,   // Bottom margin
-            t: 50,   // Top margin
-            l: 100,  // Increased left margin for day labels
-            r: 50    // Right margin
-        },
-        coloraxis: {
-            colorscale: 'Viridis',
-            colorbar: {
-                title: 'Number of Trips',
-                len: 0.8  // Make colorbar shorter
-            }
-        },
-        showlegend: true,
-        legend: {
-            x: 1,
-            xanchor: 'right',
-            y: 1
+    const originalHeatmapData = visualizationData.heatmap.data[0];
+    
+    // Function to update the heatmap based on selected view
+    function updateHeatmap(view) {
+        let filteredData = { ...originalHeatmapData };
+        
+        switch(view) {
+            case 'weekdays':
+                // Filter for weekdays (Monday to Friday)
+                filteredData.y = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                filteredData.z = originalHeatmapData.z.slice(0, 5);
+                break;
+            case 'weekends':
+                // Filter for weekends (Saturday and Sunday)
+                filteredData.y = ['Saturday', 'Sunday'];
+                filteredData.z = originalHeatmapData.z.slice(5);
+                break;
+            case 'averaged':
+                // Calculate average for weekdays and weekends
+                const weekdayData = originalHeatmapData.z.slice(0, 5);
+                const weekendData = originalHeatmapData.z.slice(5);
+                
+                // Calculate average for each hour across weekdays
+                const avgWeekday = weekdayData[0].map((_, hourIndex) => {
+                    const sum = weekdayData.reduce((acc, day) => acc + day[hourIndex], 0);
+                    return Math.round(sum / 5); // Average across 5 weekdays
+                });
+                
+                // Calculate average for each hour across weekends
+                const avgWeekend = weekendData[0].map((_, hourIndex) => {
+                    const sum = weekendData.reduce((acc, day) => acc + day[hourIndex], 0);
+                    return Math.round(sum / 2); // Average across 2 weekend days
+                });
+                
+                // Create new heatmap data with averaged values
+                filteredData = {
+                    ...originalHeatmapData,
+                    y: ['Weekday Average', 'Weekend Average'],
+                    z: [avgWeekday, avgWeekend],
+                    colorscale: 'Viridis',
+                    hovertemplate: 'Hour: %{x}<br>Day Type: %{y}<br>Average Trips: %{z}<extra></extra>'
+                };
+                break;
+            case 'member_casual':
+                // Create two heatmaps side by side for member vs casual
+                const memberData = { ...originalHeatmapData };
+                const casualData = { ...originalHeatmapData };
+                
+                // Update titles and colors
+                memberData.name = 'Member Riders';
+                casualData.name = 'Casual Riders';
+                memberData.colorscale = 'Blues';
+                casualData.colorscale = 'Reds';
+                
+                // Create a subplot layout
+                const subplotLayout = {
+                    title: 'Weekly Trip Patterns by Hour (Member vs Casual)',
+                    grid: { rows: 1, columns: 2, pattern: 'independent' },
+                    showlegend: true
+                };
+                
+                // Add individual layouts for each subplot
+                memberData.xaxis = 'x1';
+                memberData.yaxis = 'y1';
+                casualData.xaxis = 'x2';
+                casualData.yaxis = 'y2';
+                
+                Plotly.newPlot('trips-heatmap', [memberData, casualData], subplotLayout);
+                return;
+            default:
+                // 'all' view - use original data
+                break;
         }
-    };
 
-    Plotly.newPlot('trips-heatmap', [heatmapData], layout);
+        const layout = {
+            title: view === 'all' ? 'Weekly Trip Patterns by Hour' : 
+                   view === 'weekdays' ? 'Weekday Trip Patterns by Hour' :
+                   view === 'weekends' ? 'Weekend Trip Patterns by Hour' :
+                   'Average Trip Patterns by Day Type',
+            xaxis: {
+                title: 'Hour of Day',
+                tickmode: 'linear',
+                tick0: 0,
+                dtick: 1,
+                range: [0, 23]
+            },
+            yaxis: {
+                title: view === 'averaged' ? 'Day Type' : 'Day of Week',
+                tickangle: 0,
+                range: [-0.5, filteredData.y.length - 0.5]
+            },
+            margin: {
+                b: 50,
+                t: 50,
+                l: 100,
+                r: 50
+            },
+            coloraxis: {
+                colorscale: 'Viridis',
+                colorbar: {
+                    title: 'Number of Trips',
+                    len: 0.8
+                }
+            },
+            showlegend: true,
+            legend: {
+                x: 1,
+                xanchor: 'right',
+                y: 1
+            }
+        };
+
+        Plotly.newPlot('trips-heatmap', [filteredData], layout);
+    }
+
+    // Add event listeners for radio buttons
+    const radioButtons = document.querySelectorAll('input[name="heatmapView"]');
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            updateHeatmap(e.target.value);
+        });
+    });
+
+    // Initialize with default view
+    updateHeatmap('all');
 }
 
 // Function to create the daily usage visualization
@@ -358,69 +446,195 @@ function createViolinPlot(data) {
         return;
     }
 
+    // Create filter controls
+    const filterContainer = document.createElement('div');
+    filterContainer.className = 'duration-filters';
+    filterContainer.innerHTML = `
+        <div class="filter-group">
+            <label>Time Range:</label>
+            <select id="timeRange">
+                <option value="all">All Hours</option>
+                <option value="day">Day (6AM-6PM)</option>
+                <option value="night">Night (6PM-6AM)</option>
+                <option value="peak">Peak Hours (7AM-9AM, 4PM-6PM)</option>
+            </select>
+        </div>
+    `;
+    container.parentNode.insertBefore(filterContainer, container);
+
     // Process data for violin plot
     const memberData = data.filter(d => d.member_casual === 'member');
     const casualData = data.filter(d => d.member_casual === 'casual');
 
-    const traces = [
-        {
-            x: memberData.map(d => d.hour),
-            y: memberData.map(d => d.mean),
-            error_y: {
-                type: 'data',
-                array: memberData.map(d => d.std),
-                visible: true
-            },
-            name: 'Member',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: { color: 'blue' },
-            marker: { color: 'blue' }
-        },
-        {
-            x: casualData.map(d => d.hour),
-            y: casualData.map(d => d.mean),
-            error_y: {
-                type: 'data',
-                array: casualData.map(d => d.std),
-                visible: true
-            },
-            name: 'Casual',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: { color: 'red' },
-            marker: { color: 'red' }
+    function createTraces(filteredMemberData, filteredCasualData) {
+        const traces = [];
+        
+        // Helper function to create a trace
+        function createTrace(data, name, color, isMean) {
+            return {
+                x: data.map(d => d.hour),
+                y: data.map(d => isMean ? d.mean : d.median),
+                error_y: isMean ? {
+                    type: 'data',
+                    array: data.map(d => d.std),
+                    visible: true
+                } : undefined,
+                name: name,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { 
+                    color: color,
+                    dash: isMean ? undefined : 'dash'
+                },
+                marker: { color: color },
+                hovertemplate: `
+                    <b>${name}</b><br>
+                    Hour: %{x}<br>
+                    ${isMean ? 'Mean' : 'Median'}: %{y:.1f} min<br>
+                    ${isMean ? 'Median' : 'Mean'}: ${data.find(d => d.hour === '%{x}')?.[isMean ? 'median' : 'mean'].toFixed(1)} min<br>
+                    Count: ${data.find(d => d.hour === '%{x}')?.count}<br>
+                    Q1-Q3: ${data.find(d => d.hour === '%{x}')?.q1.toFixed(1)}-${data.find(d => d.hour === '%{x}')?.q3.toFixed(1)} min<extra></extra>
+                `
+            };
         }
-    ];
 
-    const layout = {
-        title: 'Average Trip Duration by Hour and User Type',
-        xaxis: { 
-            title: 'Hour of Day',
-            range: [0, 23]  // Focus on the 24 hours
-        },
-        yaxis: { 
-            title: 'Duration (minutes)',
-            range: [0, Math.max(
-                ...memberData.map(d => d.mean + d.std),
-                ...casualData.map(d => d.mean + d.std)
-            ) * 1.1]  // Add 10% padding
-        },
-        margin: {
-            t: 50,
-            b: 50,
-            l: 50,
-            r: 50
-        },
-        showlegend: true,
-        legend: {
-            x: 1,
-            xanchor: 'right',
-            y: 1
+        const timeRange = document.getElementById('timeRange').value;
+        
+        if (timeRange === 'night') {
+            // Split night data into evening and morning
+            const memberEvening = filteredMemberData.filter(d => d.hour >= 18);
+            const memberMorning = filteredMemberData.filter(d => d.hour < 6);
+            const casualEvening = filteredCasualData.filter(d => d.hour >= 18);
+            const casualMorning = filteredCasualData.filter(d => d.hour < 6);
+
+            // Member traces
+            traces.push(createTrace(memberEvening, 'Member Evening (Mean)', 'blue', true));
+            traces.push(createTrace(memberEvening, 'Member Evening (Median)', 'lightblue', false));
+            traces.push(createTrace(memberMorning, 'Member Morning (Mean)', 'blue', true));
+            traces.push(createTrace(memberMorning, 'Member Morning (Median)', 'lightblue', false));
+
+            // Casual traces
+            traces.push(createTrace(casualEvening, 'Casual Evening (Mean)', 'red', true));
+            traces.push(createTrace(casualEvening, 'Casual Evening (Median)', 'pink', false));
+            traces.push(createTrace(casualMorning, 'Casual Morning (Mean)', 'red', true));
+            traces.push(createTrace(casualMorning, 'Casual Morning (Median)', 'pink', false));
+        } else if (timeRange === 'peak') {
+            // Split peak data into morning and evening peaks
+            const memberMorningPeak = filteredMemberData.filter(d => d.hour >= 7 && d.hour < 9);
+            const memberEveningPeak = filteredMemberData.filter(d => d.hour >= 16 && d.hour < 18);
+            const casualMorningPeak = filteredCasualData.filter(d => d.hour >= 7 && d.hour < 9);
+            const casualEveningPeak = filteredCasualData.filter(d => d.hour >= 16 && d.hour < 18);
+
+            // Member traces
+            traces.push(createTrace(memberMorningPeak, 'Member Morning Peak (Mean)', 'blue', true));
+            traces.push(createTrace(memberMorningPeak, 'Member Morning Peak (Median)', 'lightblue', false));
+            traces.push(createTrace(memberEveningPeak, 'Member Evening Peak (Mean)', 'blue', true));
+            traces.push(createTrace(memberEveningPeak, 'Member Evening Peak (Median)', 'lightblue', false));
+
+            // Casual traces
+            traces.push(createTrace(casualMorningPeak, 'Casual Morning Peak (Mean)', 'red', true));
+            traces.push(createTrace(casualMorningPeak, 'Casual Morning Peak (Median)', 'pink', false));
+            traces.push(createTrace(casualEveningPeak, 'Casual Evening Peak (Mean)', 'red', true));
+            traces.push(createTrace(casualEveningPeak, 'Casual Evening Peak (Median)', 'pink', false));
+        } else {
+            // For other time ranges, create normal traces
+            traces.push(createTrace(filteredMemberData, 'Member (Mean)', 'blue', true));
+            traces.push(createTrace(filteredMemberData, 'Member (Median)', 'lightblue', false));
+            traces.push(createTrace(filteredCasualData, 'Casual (Mean)', 'red', true));
+            traces.push(createTrace(filteredCasualData, 'Casual (Median)', 'pink', false));
         }
-    };
 
-    Plotly.newPlot('duration-violin', traces, layout);
+        return traces;
+    }
+
+    function filterData(timeRange) {
+        let filteredMemberData = [...memberData];
+        let filteredCasualData = [...casualData];
+
+        // Apply time range filter
+        if (timeRange !== 'all') {
+            const hourFilter = {
+                'day': h => h >= 6 && h < 18,
+                'night': h => h < 6 || h >= 18,
+                'peak': h => (h >= 7 && h < 9) || (h >= 16 && h < 18)
+            }[timeRange];
+            
+            filteredMemberData = filteredMemberData.filter(d => hourFilter(d.hour));
+            filteredCasualData = filteredCasualData.filter(d => hourFilter(d.hour));
+        }
+
+        return { filteredMemberData, filteredCasualData };
+    }
+
+    function updatePlot() {
+        const timeRange = document.getElementById('timeRange').value;
+        const { filteredMemberData, filteredCasualData } = filterData(timeRange);
+        const traces = createTraces(filteredMemberData, filteredCasualData);
+
+        // Calculate reasonable y-axis range
+        const maxDuration = Math.max(
+            ...filteredMemberData.map(d => d.mean + d.std),
+            ...filteredCasualData.map(d => d.mean + d.std)
+        );
+        const yAxisMax = Math.min(maxDuration * 1.1, 120); // Cap at 2 hours
+
+        const layout = {
+            title: {
+                text: 'Trip Duration by Hour and User Type',
+                y: 0.95,
+                x: 0.5,
+                xanchor: 'center',
+                yanchor: 'top'
+            },
+            xaxis: { 
+                title: 'Hour of Day',
+                range: [0, 23],
+                tickmode: 'linear',
+                tick0: 0,
+                dtick: 1
+            },
+            yaxis: { 
+                title: 'Duration (minutes)',
+                range: [0, yAxisMax],
+                tickmode: 'linear',
+                tick0: 0,
+                dtick: 15
+            },
+            margin: {
+                t: 100,
+                b: 50,
+                l: 50,
+                r: 50
+            },
+            showlegend: true,
+            legend: {
+                x: 1,
+                xanchor: 'right',
+                y: 1
+            },
+            annotations: [
+                {
+                    x: 0.5,
+                    y: 1.05,
+                    xref: 'paper',
+                    yref: 'paper',
+                    text: 'Note: Only hours with at least 10 trips are shown. Solid lines show mean, dashed lines show median.',
+                    showarrow: false,
+                    font: {
+                        size: 12
+                    }
+                }
+            ]
+        };
+
+        Plotly.newPlot('duration-violin', traces, layout);
+    }
+
+    // Add event listener for time range filter
+    document.getElementById('timeRange').addEventListener('change', updatePlot);
+
+    // Initial plot
+    updatePlot();
 }
 
 // Function to create the station usage chart

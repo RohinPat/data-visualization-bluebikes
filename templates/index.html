@@ -115,6 +115,30 @@
             </div>
 
             <div class="visualization-container">
+                <div class="chart-controls">
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="heatmapView" value="all" checked>
+                            All Days
+                        </label>
+                        <label>
+                            <input type="radio" name="heatmapView" value="weekdays">
+                            Weekdays Only
+                        </label>
+                        <label>
+                            <input type="radio" name="heatmapView" value="weekends">
+                            Weekends Only
+                        </label>
+                        <label>
+                            <input type="radio" name="heatmapView" value="averaged">
+                            Averaged Weekdays/Weekends
+                        </label>
+                        <label>
+                            <input type="radio" name="heatmapView" value="member_casual">
+                            Member vs Casual
+                        </label>
+                    </div>
+                </div>
                 <div id="trips-heatmap" class="visualization"></div>
                 <div class="visualization-description">
                     <h3>Weekly Usage Patterns</h3>

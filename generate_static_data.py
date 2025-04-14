@@ -21,7 +21,7 @@ def generate_static_data():
             'heatmap': viz_generator._generate_heatmap().to_dict(),
             'station_rankings': viz_generator._generate_station_rankings().to_dict(),
             'route_rankings': viz_generator._generate_route_rankings().to_dict(),
-            'violin_data': viz_generator._generate_violin_data().to_dict()
+            'violin_data': viz_generator._generate_violin_data()
         }
         
         # Write to static/data.js

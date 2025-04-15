@@ -241,16 +241,22 @@ function createDailyUsage(data) {
     fetch(`${baseUrl}/static/daily_usage.json`)
         .then(response => response.json())
         .then(chartData => {
-            // Update the spec with the actual data
-            const spec = chartData.spec;
-            spec.data.values = chartData.data;
+            // Create the Vega-Lite specification
+            const spec = {
+                ...chartData.spec,
+                data: {
+                    values: chartData.data
+                }
+            };
 
             // Render the chart using Vega-Embed
             vegaEmbed('#daily-usage-altair', spec, {
                 actions: false,
                 theme: 'light',
                 renderer: 'svg'
-            }).catch(console.error);
+            }).catch(error => {
+                console.error('Error rendering chart:', error);
+            });
         })
         .catch(error => {
             console.error('Error loading daily usage data:', error);

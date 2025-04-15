@@ -92,7 +92,7 @@
             <p>These visualizations reveal when people use BlueBikes throughout the day and week.</p>
             
             <div class="visualization-container">
-                <div id="daily-usage-altair" class="visualization"></div>
+                <div id="daily-usage-chart" class="visualization"></div>
                 <div class="visualization-description">
                     <h3>Member vs Casual Usage Throughout the Week</h3>
                     <p>The weekly usage comparison dramatically illustrates the impact of university and commuter memberships. Member rides dominate weekdays with nearly triple the volume of casual rides, peaking at over 1,200 trips mid-week. The sharp drop in member usage on weekends, contrasted with steady casual ridership, further emphasizes BlueBike's dual role in serving both commuter and recreational needs.</p>
@@ -203,7 +203,7 @@
             fetch(baseUrl + '/daily_usage_chart')
                 .then(response => response.json())
                 .then(spec => {
-                    vegaEmbed('#daily-usage-altair', spec, {
+                    vegaEmbed('#daily-usage-chart', spec, {
                         actions: false,
                         theme: 'light',
                         renderer: 'svg'  // Use SVG renderer for better quality
@@ -220,5 +220,8 @@
                 .catch(console.error);
         });
     </script>
+
+    <!-- Load visualization scripts -->
+    <script src="static/altair_visualization.js"></script>
 </body>
 </html> 

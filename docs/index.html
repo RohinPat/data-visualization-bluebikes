@@ -12,6 +12,7 @@
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
     <link rel="stylesheet" href="styles.css">
+    <script src="../static/data.js"></script>
     <style>
         #station-map {
             height: 500px;
@@ -151,8 +152,8 @@
             <div class="visualization-container">
                 <div id="daily-usage-altair" class="visualization"></div>
                 <div class="visualization-description">
-                    <h3>Member vs Casual Usage Throughout the Week</h3>
-                    <p>The weekly usage comparison dramatically illustrates the impact of university and commuter memberships. Member rides dominate weekdays with nearly triple the volume of casual rides, peaking at over 1,200 trips mid-week. The sharp drop in member usage on weekends, contrasted with steady casual ridership, further emphasizes BlueBike's dual role in serving both commuter and recreational needs.</p>
+                    <h3>Daily Trip Distribution</h3>
+                    <p>The daily trip distribution shows clear patterns in BlueBike usage throughout the week. Weekdays see significantly higher usage than weekends, with peak activity mid-week. This pattern strongly suggests that BlueBikes serve as a primary commuting option for many users, particularly during the work week.</p>
                 </div>
             </div>
         </section>
@@ -181,5 +182,11 @@
     </footer>
 
     <script src="visualizations.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize visualizations
+            initializeVisualizations();
+        });
+    </script>
 </body>
 </html> 

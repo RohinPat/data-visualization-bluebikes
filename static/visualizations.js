@@ -232,38 +232,29 @@ function createDailyUsage(data) {
         return;
     }
 
-    // Get the data from the visualization data object
-    const dailyData = visualizationData.daily_usage;
-    if (!dailyData || !dailyData.data || !dailyData.data[0]) {
-        console.error('No daily usage data available');
-        return;
-    }
+    // Get the base URL for the current environment
+    const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? '' 
+        : window.location.pathname.replace(/\/+$/, '');
 
-    const trace = {
-        x: dailyData.data[0].x,
-        y: dailyData.data[0].y,
-        type: 'bar',
-        marker: { color: 'rgb(55, 83, 109)' }
-    };
+    // Load the static Altair spec and data
+    fetch(`${baseUrl}/static/daily_usage.json`)
+        .then(response => response.json())
+        .then(chartData => {
+            // Update the spec with the actual data
+            const spec = chartData.spec;
+            spec.data.values = chartData.data;
 
-    const layout = {
-        title: 'Total Daily Trip Distribution',
-        xaxis: { 
-            title: 'Day of Week'
-        },
-        yaxis: { 
-            title: 'Number of Trips',
-            range: [0, Math.max(...dailyData.data[0].y) * 1.1]  // Add 10% padding
-        },
-        margin: {
-            t: 50,
-            b: 50,
-            l: 50,
-            r: 50
-        }
-    };
-
-    Plotly.newPlot('daily-usage-altair', [trace], layout);
+            // Render the chart using Vega-Embed
+            vegaEmbed('#daily-usage-altair', spec, {
+                actions: false,
+                theme: 'light',
+                renderer: 'svg'
+            }).catch(console.error);
+        })
+        .catch(error => {
+            console.error('Error loading daily usage data:', error);
+        });
 }
 
 // Function to create the hourly trips visualization
@@ -923,9 +914,8 @@ async function initializeVisualizations() {
             
             // Then create other visualizations
             createHeatmap(data.hourlyUsage);
-            // createDailyUsage(data.dailyUsage); // Removed to prevent duplicate total daily trip distribution graph
+            createDailyUsage(data.dailyUsage);
             createHourlyTrips(data.hourlyUsage);
-            // createViolinPlot(data.durations); // Removed to keep only the D3 violin plot
             createStationUsage(data.stations);
             
             isInitialized = true;

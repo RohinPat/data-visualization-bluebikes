@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BlueBikes Data Analysis - Boston Bike-sharing Patterns</title>
-    <script src="https://cdn.plot.ly/plotly-2.30.1.min.js"></script>
+    <!-- Load Vega/Vega-Lite first -->
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <!-- Load other dependencies -->
+    <script src="https://cdn.plot.ly/plotly-2.30.1.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
     <link rel="stylesheet" href="styles.css">
+    <!-- Load data -->
     <script src="../static/data.js"></script>
     <style>
         #station-map {
@@ -181,10 +184,10 @@
         <p>Data visualization project for DS4200 - Information Visualization</p>
     </footer>
 
-    <script src="visualizations.js"></script>
+    <!-- Load visualization code -->
+    <script src="../static/visualizations.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize visualizations
             initializeVisualizations();
         });
     </script>

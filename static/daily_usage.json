@@ -1,1 +1,66 @@
-[{"member_casual": "casual", "day_of_week": "Friday", "count": 246}, {"member_casual": "casual", "day_of_week": "Monday", "count": 140}, {"member_casual": "casual", "day_of_week": "Saturday", "count": 159}, {"member_casual": "casual", "day_of_week": "Sunday", "count": 223}, {"member_casual": "casual", "day_of_week": "Thursday", "count": 196}, {"member_casual": "casual", "day_of_week": "Tuesday", "count": 157}, {"member_casual": "casual", "day_of_week": "Wednesday", "count": 214}, {"member_casual": "member", "day_of_week": "Friday", "count": 1539}, {"member_casual": "member", "day_of_week": "Monday", "count": 1161}, {"member_casual": "member", "day_of_week": "Saturday", "count": 772}, {"member_casual": "member", "day_of_week": "Sunday", "count": 847}, {"member_casual": "member", "day_of_week": "Thursday", "count": 1612}, {"member_casual": "member", "day_of_week": "Tuesday", "count": 1349}, {"member_casual": "member", "day_of_week": "Wednesday", "count": 1384}]
+{
+  "data": [
+    {"member_casual": "casual", "day_of_week": "Monday", "count": 140},
+    {"member_casual": "casual", "day_of_week": "Tuesday", "count": 157},
+    {"member_casual": "casual", "day_of_week": "Wednesday", "count": 214},
+    {"member_casual": "casual", "day_of_week": "Thursday", "count": 196},
+    {"member_casual": "casual", "day_of_week": "Friday", "count": 246},
+    {"member_casual": "casual", "day_of_week": "Saturday", "count": 159},
+    {"member_casual": "casual", "day_of_week": "Sunday", "count": 223},
+    {"member_casual": "member", "day_of_week": "Monday", "count": 1161},
+    {"member_casual": "member", "day_of_week": "Tuesday", "count": 1349},
+    {"member_casual": "member", "day_of_week": "Wednesday", "count": 1384},
+    {"member_casual": "member", "day_of_week": "Thursday", "count": 1612},
+    {"member_casual": "member", "day_of_week": "Friday", "count": 1539},
+    {"member_casual": "member", "day_of_week": "Saturday", "count": 772},
+    {"member_casual": "member", "day_of_week": "Sunday", "count": 847}
+  ],
+  "spec": {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "mark": "bar",
+    "encoding": {
+      "x": {
+        "field": "day_of_week",
+        "type": "nominal",
+        "sort": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        "axis": {"title": "Day of Week", "labelAngle": 0}
+      },
+      "y": {
+        "field": "count",
+        "type": "quantitative",
+        "axis": {"title": "Number of Trips"},
+        "stack": true
+      },
+      "color": {
+        "field": "member_casual",
+        "type": "nominal",
+        "scale": {
+          "domain": ["member", "casual"],
+          "range": ["#1f77b4", "#ff7f0e"]
+        },
+        "title": "User Type",
+        "legend": {
+          "title": "User Type",
+          "labelExpr": "datum.label == 'member' ? 'Member' : 'Casual'"
+        }
+      },
+      "tooltip": [
+        {"field": "day_of_week", "type": "nominal", "title": "Day"},
+        {"field": "member_casual", "type": "nominal", "title": "User Type"},
+        {"field": "count", "type": "quantitative", "title": "Number of Trips"}
+      ]
+    },
+    "width": "container",
+    "height": 400,
+    "title": {
+      "text": "Daily Trip Distribution by User Type",
+      "fontSize": 20,
+      "anchor": "middle"
+    },
+    "config": {
+      "view": {"strokeWidth": 0},
+      "axis": {"labelFontSize": 12, "titleFontSize": 14},
+      "legend": {"titleFontSize": 14, "labelFontSize": 12}
+    }
+  }
+}

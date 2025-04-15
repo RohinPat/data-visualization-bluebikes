@@ -194,8 +194,13 @@
     <!-- Initialize visualizations -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Get the base URL for the current environment
+            const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                ? '' 
+                : window.location.pathname.replace(/\/+$/, '');
+
             // Load and render the Altair chart
-            fetch('/daily_usage_chart')
+            fetch(baseUrl + '/daily_usage_chart')
                 .then(response => response.json())
                 .then(spec => {
                     vegaEmbed('#daily-usage-altair', spec, {
@@ -207,7 +212,7 @@
                 .catch(console.error);
 
             // Load data for D3 violin plot
-            fetch('/static/durations.json')
+            fetch(baseUrl + '/static/durations.json')
                 .then(response => response.json())
                 .then(data => {
                     createD3ViolinPlot(data, '#duration-violin');

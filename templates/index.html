@@ -92,10 +92,18 @@
             <p>These visualizations reveal when people use BlueBikes throughout the day and week.</p>
             
             <div class="visualization-container">
+                <div id="daily-usage-altair" class="visualization"></div>
+                <div class="visualization-description">
+                    <h3>Member vs Casual Usage Throughout the Week</h3>
+                    <p>The weekly usage comparison dramatically illustrates the impact of university and commuter memberships. Member rides dominate weekdays with nearly triple the volume of casual rides, peaking at over 1,200 trips mid-week. The sharp drop in member usage on weekends, contrasted with steady casual ridership, further emphasizes BlueBike's dual role in serving both commuter and recreational needs.</p>
+                </div>
+            </div>
+
+            <div class="visualization-container">
                 <div id="duration-violin" class="visualization"></div>
                 <div class="visualization-description">
-                    <h3>Trip Duration Patterns by User Type</h3>
-                    <p>The violin plot reveals distinct usage patterns between members and casual riders. Members, primarily commuters and students, show consistent, shorter trips (15-20 minutes) during morning and evening rush hours, suggesting regular commuting routes. In contrast, casual riders show longer, more variable durations (25-35 minutes), particularly during afternoons, indicating recreational use and tourism. The narrow "waist" in member distributions during peak hours further supports the commuter behavior pattern.</p>
+                    <h3>Trip Duration Patterns</h3>
+                    <p>The violin plot reveals the distribution of trip durations throughout the day, split by member type. The width of each "violin" shows how common different trip durations are, while the median line provides a central reference point. This visualization highlights how casual riders tend to take longer trips, especially during midday hours, while members show more consistent, shorter duration patterns typical of commuting.</p>
                 </div>
             </div>
 
@@ -145,14 +153,6 @@
                     <p>The heatmap reveals consistent high-volume periods during weekday commute hours, particularly intense on Tuesday through Thursday. The clear distinction between weekday and weekend patterns, combined with the concentration around university areas, suggests that BlueBikes serves as a crucial last-mile solution for students and workers connecting to public transit hubs.</p>
                 </div>
             </div>
-
-            <div class="visualization-container">
-                <div id="daily-usage-altair" class="visualization"></div>
-                <div class="visualization-description">
-                    <h3>Total Daily Trip Distribution</h3>
-                    <p>The daily trip distribution shows how bike usage varies throughout the week. Usage peaks during mid-week (Wednesday-Friday) with over 1,700 trips per day, while weekend days show lower usage around 1,000 trips. This pattern suggests strong commuter usage during weekdays, with reduced recreational usage on weekends.</p>
-                </div>
-            </div>
         </section>
 
         <section class="conclusions">
@@ -178,8 +178,42 @@
         <p>Data visualization project for DS4200 - Information Visualization</p>
     </footer>
 
-    <!-- Load data first, then visualizations -->
+    <!-- Load dependencies first -->
+    <script src="https://cdn.plot.ly/plotly-2.30.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <!-- Load data and visualization scripts -->
     <script src="static/data.js"></script>
+    <script src="static/d3_violin.js"></script>
     <script src="static/visualizations.js"></script>
+    
+    <!-- Initialize visualizations -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load and render the Altair chart
+            fetch('/daily_usage_chart')
+                .then(response => response.json())
+                .then(spec => {
+                    vegaEmbed('#daily-usage-altair', spec, {
+                        actions: false,
+                        theme: 'light',
+                        renderer: 'svg'  // Use SVG renderer for better quality
+                    }).catch(console.error);
+                })
+                .catch(console.error);
+
+            // Load data for D3 violin plot
+            fetch('/static/durations.json')
+                .then(response => response.json())
+                .then(data => {
+                    createD3ViolinPlot(data, '#duration-violin');
+                })
+                .catch(console.error);
+        });
+    </script>
 </body>
 </html> 

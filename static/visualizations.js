@@ -923,9 +923,9 @@ async function initializeVisualizations() {
             
             // Then create other visualizations
             createHeatmap(data.hourlyUsage);
-            createDailyUsage(data.dailyUsage);
+            // createDailyUsage(data.dailyUsage); // Removed to prevent duplicate total daily trip distribution graph
             createHourlyTrips(data.hourlyUsage);
-            createViolinPlot(data.durations);
+            // createViolinPlot(data.durations); // Removed to keep only the D3 violin plot
             createStationUsage(data.stations);
             
             isInitialized = true;

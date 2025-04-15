@@ -191,6 +191,15 @@ def generate_violin_data(df):
         'opacity': 0.6
     }
 
+def generate_violin_data_raw(df):
+    df['started_at'] = pd.to_datetime(df['started_at'])
+    df['ended_at'] = pd.to_datetime(df['ended_at'])
+    df['duration'] = (df['ended_at'] - df['started_at']).dt.total_seconds() / 60
+    df['hour'] = df['started_at'].dt.hour
+    # Filter outliers as before
+    df = df[(df['duration'] <= 1440) & (df['duration'] >= 1)]
+    return df[['member_casual', 'hour', 'duration']].to_dict('records')
+
 def main():
     # Read the CSV file
     print("Reading data file...")
@@ -218,7 +227,7 @@ def main():
     
     # Process and save trip duration data
     print("Processing trip duration data...")
-    durations = process_trip_durations(df)
+    durations = generate_violin_data_raw(df)
     with open('static/durations.json', 'w') as f:
         json.dump(durations, f)
     

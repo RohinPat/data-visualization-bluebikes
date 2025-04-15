@@ -5,5 +5,6 @@ numpy==1.26.4
 python-dateutil==2.8.2
 pytz==2024.1
 plotly==5.3.1
-altair==4.2.0
+altair==5.2.0
+vega_datasets==0.9.0
 gunicorn==20.1.0 

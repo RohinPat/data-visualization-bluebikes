@@ -1,66 +1,238 @@
 {
   "data": [
-    {"member_casual": "casual", "day_of_week": "Monday", "count": 140},
-    {"member_casual": "casual", "day_of_week": "Tuesday", "count": 157},
-    {"member_casual": "casual", "day_of_week": "Wednesday", "count": 214},
-    {"member_casual": "casual", "day_of_week": "Thursday", "count": 196},
-    {"member_casual": "casual", "day_of_week": "Friday", "count": 246},
-    {"member_casual": "casual", "day_of_week": "Saturday", "count": 159},
-    {"member_casual": "casual", "day_of_week": "Sunday", "count": 223},
-    {"member_casual": "member", "day_of_week": "Monday", "count": 1161},
-    {"member_casual": "member", "day_of_week": "Tuesday", "count": 1349},
-    {"member_casual": "member", "day_of_week": "Wednesday", "count": 1384},
-    {"member_casual": "member", "day_of_week": "Thursday", "count": 1612},
-    {"member_casual": "member", "day_of_week": "Friday", "count": 1539},
-    {"member_casual": "member", "day_of_week": "Saturday", "count": 772},
-    {"member_casual": "member", "day_of_week": "Sunday", "count": 847}
+    {
+      "day_of_week": "Mon",
+      "count": 1318,
+      "type": "Member"
+    },
+    {
+      "day_of_week": "Tue",
+      "count": 1487,
+      "type": "Member"
+    },
+    {
+      "day_of_week": "Wed",
+      "count": 1600,
+      "type": "Member"
+    },
+    {
+      "day_of_week": "Thu",
+      "count": 1796,
+      "type": "Member"
+    },
+    {
+      "day_of_week": "Fri",
+      "count": 1852,
+      "type": "Member"
+    },
+    {
+      "day_of_week": "Sat",
+      "count": 863,
+      "type": "Member"
+    },
+    {
+      "day_of_week": "Sun",
+      "count": 1083,
+      "type": "Member"
+    },
+    {
+      "day_of_week": "Mon",
+      "count": 318,
+      "type": "Casual"
+    },
+    {
+      "day_of_week": "Tue",
+      "count": 387,
+      "type": "Casual"
+    },
+    {
+      "day_of_week": "Wed",
+      "count": 400,
+      "type": "Casual"
+    },
+    {
+      "day_of_week": "Thu",
+      "count": 496,
+      "type": "Casual"
+    },
+    {
+      "day_of_week": "Fri",
+      "count": 552,
+      "type": "Casual"
+    },
+    {
+      "day_of_week": "Sat",
+      "count": 463,
+      "type": "Casual"
+    },
+    {
+      "day_of_week": "Sun",
+      "count": 483,
+      "type": "Casual"
+    }
   ],
   "spec": {
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "mark": "bar",
+    "config": {
+      "view": {
+        "continuousWidth": 300,
+        "continuousHeight": 300,
+        "strokeWidth": 0
+      },
+      "axis": {
+        "labelFontSize": 12,
+        "titleFontSize": 14
+      },
+      "legend": {
+        "labelFontSize": 12,
+        "titleFontSize": 14
+      }
+    },
+    "data": {
+      "name": "data-fddb0524538b99be1ea0f2ad5be17435"
+    },
+    "mark": {
+      "type": "bar"
+    },
     "encoding": {
-      "x": {
-        "field": "day_of_week",
-        "type": "nominal",
-        "sort": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        "axis": {"title": "Day of Week", "labelAngle": 0}
-      },
-      "y": {
-        "field": "count",
-        "type": "quantitative",
-        "axis": {"title": "Number of Trips"},
-        "stack": true
-      },
       "color": {
-        "field": "member_casual",
-        "type": "nominal",
+        "field": "type",
         "scale": {
-          "domain": ["member", "casual"],
-          "range": ["#1f77b4", "#ff7f0e"]
+          "domain": [
+            "Member",
+            "Casual"
+          ],
+          "range": [
+            "#1f77b4",
+            "#ff7f0e"
+          ]
         },
-        "title": "User Type",
-        "legend": {
-          "title": "User Type",
-          "labelExpr": "datum.label == 'member' ? 'Member' : 'Casual'"
-        }
+        "type": "nominal"
       },
       "tooltip": [
-        {"field": "day_of_week", "type": "nominal", "title": "Day"},
-        {"field": "member_casual", "type": "nominal", "title": "User Type"},
-        {"field": "count", "type": "quantitative", "title": "Number of Trips"}
-      ]
+        {
+          "field": "day_of_week",
+          "title": "Day",
+          "type": "nominal"
+        },
+        {
+          "field": "type",
+          "title": "User Type",
+          "type": "nominal"
+        },
+        {
+          "field": "count",
+          "format": ",",
+          "title": "Number of Trips",
+          "type": "quantitative"
+        }
+      ],
+      "x": {
+        "axis": {
+          "labelAngle": 0,
+          "title": "Day of Week"
+        },
+        "field": "day_of_week",
+        "sort": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat",
+          "Sun"
+        ],
+        "type": "nominal"
+      },
+      "y": {
+        "axis": {
+          "title": "Number of Trips"
+        },
+        "field": "count",
+        "stack": true,
+        "type": "quantitative"
+      }
     },
-    "width": "container",
     "height": 400,
     "title": {
       "text": "Daily Trip Distribution by User Type",
       "fontSize": 20,
       "anchor": "middle"
     },
-    "config": {
-      "view": {"strokeWidth": 0},
-      "axis": {"labelFontSize": 12, "titleFontSize": 14},
-      "legend": {"titleFontSize": 14, "labelFontSize": 12}
+    "width": "container",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+    "datasets": {
+      "data-fddb0524538b99be1ea0f2ad5be17435": [
+        {
+          "day_of_week": "Mon",
+          "count": 1318,
+          "type": "Member"
+        },
+        {
+          "day_of_week": "Tue",
+          "count": 1487,
+          "type": "Member"
+        },
+        {
+          "day_of_week": "Wed",
+          "count": 1600,
+          "type": "Member"
+        },
+        {
+          "day_of_week": "Thu",
+          "count": 1796,
+          "type": "Member"
+        },
+        {
+          "day_of_week": "Fri",
+          "count": 1852,
+          "type": "Member"
+        },
+        {
+          "day_of_week": "Sat",
+          "count": 863,
+          "type": "Member"
+        },
+        {
+          "day_of_week": "Sun",
+          "count": 1083,
+          "type": "Member"
+        },
+        {
+          "day_of_week": "Mon",
+          "count": 318,
+          "type": "Casual"
+        },
+        {
+          "day_of_week": "Tue",
+          "count": 387,
+          "type": "Casual"
+        },
+        {
+          "day_of_week": "Wed",
+          "count": 400,
+          "type": "Casual"
+        },
+        {
+          "day_of_week": "Thu",
+          "count": 496,
+          "type": "Casual"
+        },
+        {
+          "day_of_week": "Fri",
+          "count": 552,
+          "type": "Casual"
+        },
+        {
+          "day_of_week": "Sat",
+          "count": 463,
+          "type": "Casual"
+        },
+        {
+          "day_of_week": "Sun",
+          "count": 483,
+          "type": "Casual"
+        }
+      ]
     }
   }
 }

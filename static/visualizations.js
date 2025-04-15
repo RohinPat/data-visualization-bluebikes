@@ -237,18 +237,10 @@ function createDailyUsage(data) {
         ? '' 
         : window.location.pathname.replace(/\/+$/, '');
 
-    // Load the static Altair spec and data
-    fetch(`${baseUrl}/static/daily_usage.json`)
+    // Load the static Vega-Lite specification
+    fetch(`${baseUrl}/static/daily_usage_chart.json`)
         .then(response => response.json())
-        .then(chartData => {
-            // Create the Vega-Lite specification
-            const spec = {
-                ...chartData.spec,
-                data: {
-                    values: chartData.data
-                }
-            };
-
+        .then(spec => {
             // Render the chart using Vega-Embed
             vegaEmbed('#daily-usage-altair', spec, {
                 actions: false,
@@ -259,7 +251,7 @@ function createDailyUsage(data) {
             });
         })
         .catch(error => {
-            console.error('Error loading daily usage data:', error);
+            console.error('Error loading daily usage specification:', error);
         });
 }
 

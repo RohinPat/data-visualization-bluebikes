@@ -92,7 +92,7 @@
             <p>These visualizations reveal when people use BlueBikes throughout the day and week.</p>
             
             <div class="visualization-container">
-                <div id="daily-usage-chart" class="visualization"></div>
+                <div id="daily-usage-altair" class="visualization"></div>
                 <div class="visualization-description">
                     <h3>Member vs Casual Usage Throughout the Week</h3>
                     <p>The weekly usage comparison dramatically illustrates the impact of university and commuter memberships. Member rides dominate weekdays with nearly triple the volume of casual rides, peaking at over 1,200 trips mid-week. The sharp drop in member usage on weekends, contrasted with steady casual ridership, further emphasizes BlueBike's dual role in serving both commuter and recreational needs.</p>
@@ -189,7 +189,6 @@
     <!-- Load data and visualization scripts -->
     <script src="static/data.js"></script>
     <script src="static/d3_violin.js"></script>
-    <script src="static/altair_visualization.js"></script>
     <script src="static/visualizations.js"></script>
     
     <!-- Initialize visualizations -->
@@ -199,6 +198,18 @@
             const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
                 ? '' 
                 : window.location.pathname.replace(/\/+$/, '');
+
+            // Load and render the Altair chart
+            fetch(baseUrl + '/daily_usage_chart')
+                .then(response => response.json())
+                .then(spec => {
+                    vegaEmbed('#daily-usage-altair', spec, {
+                        actions: false,
+                        theme: 'light',
+                        renderer: 'svg'  // Use SVG renderer for better quality
+                    }).catch(console.error);
+                })
+                .catch(console.error);
 
             // Load data for D3 violin plot
             fetch(baseUrl + '/static/durations.json')

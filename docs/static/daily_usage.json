@@ -72,21 +72,6 @@
     }
   ],
   "spec": {
-    "config": {
-      "view": {
-        "continuousWidth": 300,
-        "continuousHeight": 300,
-        "strokeWidth": 0
-      },
-      "axis": {
-        "labelFontSize": 12,
-        "titleFontSize": 14
-      },
-      "legend": {
-        "labelFontSize": 12,
-        "titleFontSize": 14
-      }
-    },
     "mark": "bar",
     "encoding": {
       "x": {
@@ -126,6 +111,19 @@
       "text": "Daily Trip Distribution by User Type",
       "fontSize": 20,
       "anchor": "middle"
+    },
+    "config": {
+      "view": {
+        "strokeWidth": 0
+      },
+      "axis": {
+        "labelFontSize": 12,
+        "titleFontSize": 14
+      },
+      "legend": {
+        "labelFontSize": 12,
+        "titleFontSize": 14
+      }
     }
   }
 } 

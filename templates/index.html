@@ -189,6 +189,7 @@
     <!-- Load data and visualization scripts -->
     <script src="static/data.js"></script>
     <script src="static/d3_violin.js"></script>
+    <script src="static/altair_visualization.js"></script>
     <script src="static/visualizations.js"></script>
     
     <!-- Initialize visualizations -->
@@ -199,18 +200,6 @@
                 ? '' 
                 : window.location.pathname.replace(/\/+$/, '');
 
-            // Load and render the Altair chart
-            fetch(baseUrl + '/daily_usage_chart')
-                .then(response => response.json())
-                .then(spec => {
-                    vegaEmbed('#daily-usage-chart', spec, {
-                        actions: false,
-                        theme: 'light',
-                        renderer: 'svg'  // Use SVG renderer for better quality
-                    }).catch(console.error);
-                })
-                .catch(console.error);
-
             // Load data for D3 violin plot
             fetch(baseUrl + '/static/durations.json')
                 .then(response => response.json())
@@ -220,8 +209,5 @@
                 .catch(console.error);
         });
     </script>
-
-    <!-- Load visualization scripts -->
-    <script src="static/altair_visualization.js"></script>
 </body>
 </html> 

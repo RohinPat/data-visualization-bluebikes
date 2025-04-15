@@ -9,11 +9,21 @@ async function loadAltairVisualization() {
         const response = await fetch(`${baseUrl}/static/daily_usage.json`);
         const data = await response.json();
         
+        // Create the full Vega-Lite specification
+        const spec = {
+            $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+            data: {
+                values: data.data
+            },
+            ...data.spec
+        };
+        
         // Embed the visualization using Vega-Embed
-        vegaEmbed('#daily-usage-chart', data.spec, {
+        await vegaEmbed('#daily-usage-chart', spec, {
             actions: false,
-            renderer: 'svg'
-        }).catch(console.error);
+            renderer: 'svg',
+            theme: 'light'
+        });
     } catch (error) {
         console.error('Error loading visualization:', error);
         // Add a visible error message on the page
